@@ -4,18 +4,19 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIdeas } from "@/contexts/IdeasContext";
 
-const VOTING_PASSWORD = "ideas123"; // In a real app, this would be stored securely
+const VOTING_PASSWORD = "ideas123";
 
 export default function Vote() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
-  const { ideas, updateIdea } = useIdeas();
+  const { ideas, updateIdea, isLoading } = useIdeas();
   const { toast } = useToast();
+  const [isVoting, setIsVoting] = useState<string | null>(null);
 
   const handleAuthenticate = () => {
     if (password === VOTING_PASSWORD) {
@@ -33,7 +34,7 @@ export default function Vote() {
     }
   };
 
-  const handleVote = (ideaId: string) => {
+  const handleVote = async (ideaId: string) => {
     if (votedIdeas.includes(ideaId)) {
       toast({
         title: "Error",
@@ -43,16 +44,20 @@ export default function Vote() {
       return;
     }
 
-    const idea = ideas.find(i => i.id === ideaId);
-    if (idea) {
-      updateIdea(ideaId, { votes: idea.votes + 1 });
+    setIsVoting(ideaId);
+    try {
+      const idea = ideas.find(i => i.id === ideaId);
+      if (idea) {
+        await updateIdea(ideaId, { votes: idea.votes + 1 });
+        setVotedIdeas([...votedIdeas, ideaId]);
+        toast({
+          title: "Success!",
+          description: "Your vote has been recorded",
+        });
+      }
+    } finally {
+      setIsVoting(null);
     }
-    
-    setVotedIdeas([...votedIdeas, ideaId]);
-    toast({
-      title: "Success!",
-      description: "Your vote has been recorded",
-    });
   };
 
   if (!isAuthenticated) {
@@ -81,6 +86,14 @@ export default function Vote() {
             </div>
           </Card>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -126,10 +139,14 @@ export default function Vote() {
                 <p className="text-gray-600 mb-4">{idea.description}</p>
                 <Button
                   className="w-full"
-                  disabled={votedIdeas.includes(idea.id)}
+                  disabled={votedIdeas.includes(idea.id) || isVoting === idea.id}
                   onClick={() => handleVote(idea.id)}
                 >
-                  <ThumbsUp className="w-4 h-4 mr-2" />
+                  {isVoting === idea.id ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ThumbsUp className="w-4 h-4 mr-2" />
+                  )}
                   {votedIdeas.includes(idea.id) ? "Already Voted" : "Vote"}
                 </Button>
               </Card>

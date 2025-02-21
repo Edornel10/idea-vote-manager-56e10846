@@ -1,60 +1,68 @@
 
-import React, { createContext, useContext, useState } from 'react';
-
-interface Idea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  votes: number;
-}
-
-const initialIdeas: Idea[] = [
-  {
-    id: "1",
-    title: "AI-Powered Learning Platform",
-    category: "Education",
-    description: "Create an adaptive learning platform that uses AI to personalize content.",
-    votes: 15,
-  },
-  {
-    id: "2",
-    title: "Sustainable Food Delivery",
-    category: "Environment",
-    description: "Zero-waste food delivery service using reusable containers.",
-    votes: 10,
-  },
-  {
-    id: "3",
-    title: "Community Skills Exchange",
-    category: "Community",
-    description: "Platform for neighbors to exchange skills and services.",
-    votes: 8,
-  },
-];
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import type { Idea } from '@/types/ideas';
 
 interface IdeasContextType {
   ideas: Idea[];
-  updateIdea: (ideaId: string, updates: Partial<Idea>) => void;
+  updateIdea: (ideaId: string, updates: Partial<Idea>) => Promise<void>;
+  isLoading: boolean;
 }
 
 const IdeasContext = createContext<IdeasContextType | undefined>(undefined);
 
 export function IdeasProvider({ children }: { children: React.ReactNode }) {
-  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const updateIdea = (ideaId: string, updates: Partial<Idea>) => {
-    setIdeas(currentIdeas =>
-      currentIdeas.map(idea =>
-        idea.id === ideaId
-          ? { ...idea, ...updates }
-          : idea
-      )
-    );
+  useEffect(() => {
+    fetchIdeas();
+  }, []);
+
+  const fetchIdeas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching ideas:', error);
+        return;
+      }
+
+      setIdeas(data || []);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateIdea = async (ideaId: string, updates: Partial<Idea>) => {
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .update(updates)
+        .eq('id', ideaId);
+
+      if (error) {
+        console.error('Error updating idea:', error);
+        return;
+      }
+
+      setIdeas(currentIdeas =>
+        currentIdeas.map(idea =>
+          idea.id === ideaId
+            ? { ...idea, ...updates }
+            : idea
+        )
+      );
+    } catch (error) {
+      console.error('Error updating idea:', error);
+    }
   };
 
   return (
-    <IdeasContext.Provider value={{ ideas, updateIdea }}>
+    <IdeasContext.Provider value={{ ideas, updateIdea, isLoading }}>
       {children}
     </IdeasContext.Provider>
   );
