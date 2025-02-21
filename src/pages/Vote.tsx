@@ -4,19 +4,49 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { ThumbsUp, Loader2 } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useIdeas } from "@/contexts/IdeasContext";
 
-const VOTING_PASSWORD = "ideas123";
+interface Idea {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  votes: number;
+}
+
+const initialIdeas: Idea[] = [
+  {
+    id: "1",
+    title: "AI-Powered Learning Platform",
+    category: "Education",
+    description: "Create an adaptive learning platform that uses AI to personalize content.",
+    votes: 15,
+  },
+  {
+    id: "2",
+    title: "Sustainable Food Delivery",
+    category: "Environment",
+    description: "Zero-waste food delivery service using reusable containers.",
+    votes: 10,
+  },
+  {
+    id: "3",
+    title: "Community Skills Exchange",
+    category: "Community",
+    description: "Platform for neighbors to exchange skills and services.",
+    votes: 8,
+  },
+];
+
+const VOTING_PASSWORD = "ideas123"; // In a real app, this would be stored securely
 
 export default function Vote() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
-  const { ideas, updateIdea, isLoading } = useIdeas();
+  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
   const { toast } = useToast();
-  const [isVoting, setIsVoting] = useState<string | null>(null);
 
   const handleAuthenticate = () => {
     if (password === VOTING_PASSWORD) {
@@ -34,7 +64,7 @@ export default function Vote() {
     }
   };
 
-  const handleVote = async (ideaId: string) => {
+  const handleVote = (ideaId: string) => {
     if (votedIdeas.includes(ideaId)) {
       toast({
         title: "Error",
@@ -44,20 +74,19 @@ export default function Vote() {
       return;
     }
 
-    setIsVoting(ideaId);
-    try {
-      const idea = ideas.find(i => i.id === ideaId);
-      if (idea) {
-        await updateIdea(ideaId, { votes: idea.votes + 1 });
-        setVotedIdeas([...votedIdeas, ideaId]);
-        toast({
-          title: "Success!",
-          description: "Your vote has been recorded",
-        });
-      }
-    } finally {
-      setIsVoting(null);
-    }
+    setIdeas(currentIdeas => 
+      currentIdeas.map(idea => 
+        idea.id === ideaId 
+          ? { ...idea, votes: idea.votes + 1 }
+          : idea
+      )
+    );
+    
+    setVotedIdeas([...votedIdeas, ideaId]);
+    toast({
+      title: "Success!",
+      description: "Your vote has been recorded",
+    });
   };
 
   if (!isAuthenticated) {
@@ -86,14 +115,6 @@ export default function Vote() {
             </div>
           </Card>
         </motion.div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -139,14 +160,10 @@ export default function Vote() {
                 <p className="text-gray-600 mb-4">{idea.description}</p>
                 <Button
                   className="w-full"
-                  disabled={votedIdeas.includes(idea.id) || isVoting === idea.id}
+                  disabled={votedIdeas.includes(idea.id)}
                   onClick={() => handleVote(idea.id)}
                 >
-                  {isVoting === idea.id ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <ThumbsUp className="w-4 h-4 mr-2" />
-                  )}
+                  <ThumbsUp className="w-4 h-4 mr-2" />
                   {votedIdeas.includes(idea.id) ? "Already Voted" : "Vote"}
                 </Button>
               </Card>
