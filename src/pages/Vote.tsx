@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ThumbsUp } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface Idea {
   id: string;
@@ -15,7 +15,7 @@ interface Idea {
   votes: number;
 }
 
-const mockIdeas: Idea[] = [
+const initialIdeas: Idea[] = [
   {
     id: "1",
     title: "AI-Powered Learning Platform",
@@ -45,6 +45,7 @@ export default function Vote() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
+  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
   const { toast } = useToast();
 
   const handleAuthenticate = () => {
@@ -73,6 +74,14 @@ export default function Vote() {
       return;
     }
 
+    setIdeas(currentIdeas => 
+      currentIdeas.map(idea => 
+        idea.id === ideaId 
+          ? { ...idea, votes: idea.votes + 1 }
+          : idea
+      )
+    );
+    
     setVotedIdeas([...votedIdeas, ideaId]);
     toast({
       title: "Success!",
@@ -128,7 +137,7 @@ export default function Vote() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          {mockIdeas.map((idea) => (
+          {ideas.map((idea) => (
             <motion.div
               key={idea.id}
               layout
