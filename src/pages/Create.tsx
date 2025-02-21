@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const categories = ["Education", "Environment", "Community", "Technology", "Health"];
 
@@ -23,16 +24,38 @@ export default function Create() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .insert([
+          {
+            title,
+            category,
+            description,
+            votes: 0
+          }
+        ]);
 
-    toast({
-      title: "Success!",
-      description: "Your idea has been created.",
-    });
+      if (error) {
+        throw error;
+      }
 
-    setIsSubmitting(false);
-    navigate("/");
+      toast({
+        title: "Success!",
+        description: "Your idea has been created.",
+      });
+
+      navigate("/");
+    } catch (error) {
+      console.error('Error creating idea:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create idea. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
