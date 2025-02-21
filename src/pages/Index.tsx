@@ -6,46 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
-interface Idea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  votes: number;
-}
-
-const mockIdeas: Idea[] = [
-  {
-    id: "1",
-    title: "AI-Powered Learning Platform",
-    category: "Education",
-    description: "Create an adaptive learning platform that uses AI to personalize content.",
-    votes: 15,
-  },
-  {
-    id: "2",
-    title: "Sustainable Food Delivery",
-    category: "Environment",
-    description: "Zero-waste food delivery service using reusable containers.",
-    votes: 10,
-  },
-  {
-    id: "3",
-    title: "Community Skills Exchange",
-    category: "Community",
-    description: "Platform for neighbors to exchange skills and services.",
-    votes: 8,
-  },
-];
+import { useIdeas } from "@/contexts/IdeasContext";
 
 const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
 
 export default function Index() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const { ideas } = useIdeas();
 
-  const filteredIdeas = mockIdeas.filter((idea) => {
+  const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
                          idea.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;

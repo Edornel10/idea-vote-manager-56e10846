@@ -6,38 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Idea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  votes: number;
-}
-
-const initialIdeas: Idea[] = [
-  {
-    id: "1",
-    title: "AI-Powered Learning Platform",
-    category: "Education",
-    description: "Create an adaptive learning platform that uses AI to personalize content.",
-    votes: 15,
-  },
-  {
-    id: "2",
-    title: "Sustainable Food Delivery",
-    category: "Environment",
-    description: "Zero-waste food delivery service using reusable containers.",
-    votes: 10,
-  },
-  {
-    id: "3",
-    title: "Community Skills Exchange",
-    category: "Community",
-    description: "Platform for neighbors to exchange skills and services.",
-    votes: 8,
-  },
-];
+import { useIdeas } from "@/contexts/IdeasContext";
 
 const VOTING_PASSWORD = "ideas123"; // In a real app, this would be stored securely
 
@@ -45,7 +14,7 @@ export default function Vote() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
-  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
+  const { ideas, updateIdea } = useIdeas();
   const { toast } = useToast();
 
   const handleAuthenticate = () => {
@@ -74,13 +43,10 @@ export default function Vote() {
       return;
     }
 
-    setIdeas(currentIdeas => 
-      currentIdeas.map(idea => 
-        idea.id === ideaId 
-          ? { ...idea, votes: idea.votes + 1 }
-          : idea
-      )
-    );
+    const idea = ideas.find(i => i.id === ideaId);
+    if (idea) {
+      updateIdea(ideaId, { votes: idea.votes + 1 });
+    }
     
     setVotedIdeas([...votedIdeas, ideaId]);
     toast({
