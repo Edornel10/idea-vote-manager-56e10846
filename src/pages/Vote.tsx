@@ -92,23 +92,24 @@ export default function Vote() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#222222] flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md w-full"
         >
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold text-center mb-6">Enter Voting Password</h2>
+          <Card className="bg-[#333333] p-6 border-0">
+            <h2 className="text-2xl font-bold text-center mb-6 text-white">Enter Voting Password</h2>
             <div className="space-y-4">
               <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
+                className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
               />
               <Button
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90"
                 onClick={handleAuthenticate}
               >
                 Access Voting
@@ -122,14 +123,14 @@ export default function Vote() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p>Loading ideas...</p>
+      <div className="min-h-screen bg-[#222222] flex items-center justify-center">
+        <p className="text-white">Loading ideas...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -153,22 +154,22 @@ export default function Vote() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Card className="p-6">
+              <Card className="bg-[#333333] p-6 border-0">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-1">{idea.title}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <h3 className="text-xl font-semibold text-white mb-1">{idea.title}</h3>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary">
                       {idea.category}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-gray-900">{idea.votes}</span>
-                    <p className="text-sm text-gray-500">votes</p>
+                    <span className="text-2xl font-bold text-white">{idea.votes}</span>
+                    <p className="text-sm text-gray-400">votes</p>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-4">{idea.description}</p>
+                <p className="text-gray-300 mb-4">{idea.description}</p>
                 <Button
-                  className="w-full"
+                  className={`w-full ${votedIdeas.includes(idea.id) ? 'bg-gray-600' : 'bg-primary hover:bg-primary/90'}`}
                   disabled={votedIdeas.includes(idea.id)}
                   onClick={() => handleVote(idea.id)}
                 >
