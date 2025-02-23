@@ -44,41 +44,41 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading ideas...</p>
+      <div className="min-h-screen bg-[#222222] flex items-center justify-center">
+        <p className="text-white">Loading ideas...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-foreground mb-2">
+          <h1 className="text-4xl font-bold text-white mb-2">
             Explore Ideas
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-400">
             Discover and filter through innovative ideas
           </p>
         </motion.div>
 
         <div className="flex gap-4 mb-8">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
               type="text"
               placeholder="Search ideas..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 w-full bg-card border-border"
+              className="pl-10 w-full bg-[#444444] border-0 text-white placeholder:text-gray-400"
             />
           </div>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[180px] bg-card border-border">
+            <SelectTrigger className="w-[180px] bg-[#444444] border-0 text-white">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -106,24 +106,24 @@ export default function Index() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <Card className="p-6 glass-card hover:bg-card/70 transition-colors duration-200">
+              <Card className="bg-[#333333] p-6 border-0">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-xl font-semibold text-foreground mb-1">
+                    <h3 className="text-xl font-semibold text-white mb-1">
                       {idea.title}
                     </h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary-foreground">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#9b87f5]/20 text-[#9b87f5]">
                       {idea.category}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-white">
                       {idea.votes}
                     </span>
-                    <p className="text-sm text-muted-foreground">votes</p>
+                    <p className="text-sm text-gray-400">votes</p>
                   </div>
                 </div>
-                <p className="text-muted-foreground">{idea.description}</p>
+                <p className="text-gray-300">{idea.description}</p>
               </Card>
             </motion.div>
           ))}
@@ -136,7 +136,7 @@ export default function Index() {
         >
           <Link
             to="/create"
-            className="flex items-center justify-center w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors duration-200"
+            className="flex items-center justify-center w-14 h-14 bg-[#9b87f5] text-white rounded-full shadow-lg hover:bg-[#9b87f5]/90 transition-colors duration-200"
           >
             <Plus className="w-6 h-6" />
           </Link>

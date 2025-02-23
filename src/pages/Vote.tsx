@@ -109,7 +109,7 @@ export default function Vote() {
                 className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
               />
               <Button
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full bg-[#9b87f5] hover:bg-[#9b87f5]/90"
                 onClick={handleAuthenticate}
               >
                 Access Voting
@@ -158,7 +158,7 @@ export default function Vote() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-semibold text-white mb-1">{idea.title}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#9b87f5]/20 text-[#9b87f5]">
                       {idea.category}
                     </span>
                   </div>
@@ -169,7 +169,7 @@ export default function Vote() {
                 </div>
                 <p className="text-gray-300 mb-4">{idea.description}</p>
                 <Button
-                  className={`w-full ${votedIdeas.includes(idea.id) ? 'bg-gray-600' : 'bg-primary hover:bg-primary/90'}`}
+                  className={`w-full ${votedIdeas.includes(idea.id) ? 'bg-gray-600' : 'bg-[#9b87f5] hover:bg-[#9b87f5]/90'}`}
                   disabled={votedIdeas.includes(idea.id)}
                   onClick={() => handleVote(idea.id)}
                 >
