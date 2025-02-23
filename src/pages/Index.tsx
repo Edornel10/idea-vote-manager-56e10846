@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Idea {
   id: string;
@@ -15,42 +17,38 @@ interface Idea {
   votes: number;
 }
 
-const mockIdeas: Idea[] = [
-  {
-    id: "1",
-    title: "AI-Powered Learning Platform",
-    category: "Education",
-    description: "Create an adaptive learning platform that uses AI to personalize content.",
-    votes: 15,
-  },
-  {
-    id: "2",
-    title: "Sustainable Food Delivery",
-    category: "Environment",
-    description: "Zero-waste food delivery service using reusable containers.",
-    votes: 10,
-  },
-  {
-    id: "3",
-    title: "Community Skills Exchange",
-    category: "Community",
-    description: "Platform for neighbors to exchange skills and services.",
-    votes: 8,
-  },
-];
-
 const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
 
 export default function Index() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const filteredIdeas = mockIdeas.filter((idea) => {
+  const { data: ideas = [], isLoading } = useQuery({
+    queryKey: ['ideas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*');
+      
+      if (error) throw error;
+      return data as Idea[];
+    }
+  });
+
+  const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
                          idea.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Loading ideas...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

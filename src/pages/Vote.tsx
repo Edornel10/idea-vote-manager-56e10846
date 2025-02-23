@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ThumbsUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Idea {
   id: string;
@@ -15,38 +17,27 @@ interface Idea {
   votes: number;
 }
 
-const initialIdeas: Idea[] = [
-  {
-    id: "1",
-    title: "AI-Powered Learning Platform",
-    category: "Education",
-    description: "Create an adaptive learning platform that uses AI to personalize content.",
-    votes: 15,
-  },
-  {
-    id: "2",
-    title: "Sustainable Food Delivery",
-    category: "Environment",
-    description: "Zero-waste food delivery service using reusable containers.",
-    votes: 10,
-  },
-  {
-    id: "3",
-    title: "Community Skills Exchange",
-    category: "Community",
-    description: "Platform for neighbors to exchange skills and services.",
-    votes: 8,
-  },
-];
-
 const VOTING_PASSWORD = "ideas123"; // In a real app, this would be stored securely
 
 export default function Vote() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
-  const [ideas, setIdeas] = useState<Idea[]>(initialIdeas);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: ideas = [], isLoading } = useQuery({
+    queryKey: ['ideas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .order('votes', { ascending: false });
+      
+      if (error) throw error;
+      return data as Idea[];
+    }
+  });
 
   const handleAuthenticate = () => {
     if (password === VOTING_PASSWORD) {
@@ -64,7 +55,7 @@ export default function Vote() {
     }
   };
 
-  const handleVote = (ideaId: string) => {
+  const handleVote = async (ideaId: string) => {
     if (votedIdeas.includes(ideaId)) {
       toast({
         title: "Error",
@@ -74,19 +65,29 @@ export default function Vote() {
       return;
     }
 
-    setIdeas(currentIdeas => 
-      currentIdeas.map(idea => 
-        idea.id === ideaId 
-          ? { ...idea, votes: idea.votes + 1 }
-          : idea
-      )
-    );
-    
-    setVotedIdeas([...votedIdeas, ideaId]);
-    toast({
-      title: "Success!",
-      description: "Your vote has been recorded",
-    });
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .update({ votes: (ideas.find(i => i.id === ideaId)?.votes || 0) + 1 })
+        .eq('id', ideaId);
+
+      if (error) throw error;
+      
+      setVotedIdeas(prev => [...prev, ideaId]);
+      await queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      
+      toast({
+        title: "Success!",
+        description: "Your vote has been recorded",
+      });
+    } catch (error) {
+      console.error('Error voting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record your vote",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -115,6 +116,14 @@ export default function Vote() {
             </div>
           </Card>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Loading ideas...</p>
       </div>
     );
   }

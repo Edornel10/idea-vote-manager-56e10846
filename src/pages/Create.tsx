@@ -6,8 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const categories = ["Education", "Environment", "Community", "Technology", "Health"];
 
@@ -16,23 +18,51 @@ export default function Create() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!title || !category || !description) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .insert([
+          { title, category, description, votes: 0 }
+        ]);
 
-    toast({
-      title: "Success!",
-      description: "Your idea has been created.",
-    });
+      if (error) throw error;
 
-    setIsSubmitting(false);
-    navigate("/");
+      await queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      
+      toast({
+        title: "Success!",
+        description: "Your idea has been submitted",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error creating idea:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit your idea",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,35 +73,34 @@ export default function Create() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Share Your Idea</h1>
-          <p className="text-gray-600">Submit your innovative idea to the community</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Submit Your Idea</h1>
+          <p className="text-gray-600">Share your innovative ideas with the community</p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
         >
           <Card className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                   Title
                 </label>
                 <Input
-                  required
+                  id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter a clear, concise title"
-                  className="w-full"
+                  placeholder="Enter the title of your idea"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
                   Category
                 </label>
-                <Select required value={category} onValueChange={setCategory}>
+                <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -86,30 +115,25 @@ export default function Create() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <Textarea
-                  required
+                  id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe your idea in detail..."
-                  className="w-full min-h-[150px]"
+                  placeholder="Describe your idea in detail"
+                  rows={4}
                 />
               </div>
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/")}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Submit Idea"}
-                </Button>
-              </div>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit Idea"}
+              </Button>
             </form>
           </Card>
         </motion.div>
