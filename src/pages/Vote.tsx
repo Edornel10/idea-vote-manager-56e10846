@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -108,7 +109,7 @@ export default function Vote() {
                 className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
               />
               <Button
-                className="w-full bg-[#9b87f5] hover:bg-[#9b87f5]/90"
+                className="w-full bg-[#ea384c] hover:bg-[#ea384c]/90"
                 onClick={handleAuthenticate}
               >
                 Access Voting
