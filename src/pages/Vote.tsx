@@ -4,10 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp, Search, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Idea {
   id: string;
@@ -18,11 +19,14 @@ interface Idea {
 }
 
 const VOTING_PASSWORD = "ideas123"; // In a real app, this would be stored securely
+const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
 
 export default function Vote() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -37,6 +41,13 @@ export default function Vote() {
       if (error) throw error;
       return data as Idea[];
     }
+  });
+
+  const filteredIdeas = ideas.filter((idea) => {
+    const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
+                         idea.description.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   const handleAuthenticate = () => {
@@ -141,13 +152,39 @@ export default function Vote() {
           <p className="text-gray-400">Support the ideas you believe in</p>
         </motion.div>
 
+        <div className="flex gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="Search ideas..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 w-full bg-[#444444] border-0 text-white placeholder:text-gray-400"
+            />
+          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-[180px] bg-[#444444] border-0 text-white">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <motion.div 
           className="grid gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          {ideas.map((idea) => (
+          {filteredIdeas.map((idea) => (
             <motion.div
               key={idea.id}
               layout
