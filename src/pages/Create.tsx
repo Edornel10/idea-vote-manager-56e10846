@@ -66,15 +66,15 @@ export default function Create() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-foreground mb-2">Submit Your Idea</h1>
-          <p className="text-muted-foreground">Share your innovative ideas with the community</p>
+          <h1 className="text-4xl font-bold text-white mb-2">Submit Your Idea</h1>
+          <p className="text-gray-400">Share your innovative ideas with the community</p>
         </motion.div>
 
         <motion.div
@@ -82,10 +82,10 @@ export default function Create() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="p-6 glass-card">
+          <Card className="bg-[#333333] p-6 border-0">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="title" className="block text-sm font-medium text-white mb-1">
                   Title
                 </label>
                 <Input
@@ -93,16 +93,16 @@ export default function Create() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter the title of your idea"
-                  className="bg-card border-border"
+                  className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="category" className="block text-sm font-medium text-white mb-1">
                   Category
                 </label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-card border-border">
+                  <SelectTrigger className="bg-[#444444] border-0 text-white">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -116,7 +116,7 @@ export default function Create() {
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="description" className="block text-sm font-medium text-white mb-1">
                   Description
                 </label>
                 <Textarea
@@ -125,13 +125,13 @@ export default function Create() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe your idea in detail"
                   rows={4}
-                  className="bg-card border-border"
+                  className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full bg-[#ea384c] hover:bg-[#ea384c]/90"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Submitting..." : "Submit Idea"}
@@ -143,3 +143,4 @@ export default function Create() {
     </div>
   );
 }
+

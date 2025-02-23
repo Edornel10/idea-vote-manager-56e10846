@@ -112,7 +112,7 @@ export default function Index() {
                     <h3 className="text-xl font-semibold text-white mb-1">
                       {idea.title}
                     </h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#9b87f5]/20 text-[#9b87f5]">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ea384c]/20 text-[#ea384c]">
                       {idea.category}
                     </span>
                   </div>
@@ -136,7 +136,7 @@ export default function Index() {
         >
           <Link
             to="/create"
-            className="flex items-center justify-center w-14 h-14 bg-[#9b87f5] text-white rounded-full shadow-lg hover:bg-[#9b87f5]/90 transition-colors duration-200"
+            className="flex items-center justify-center w-14 h-14 bg-[#ea384c] text-white rounded-full shadow-lg hover:bg-[#ea384c]/90 transition-colors duration-200"
           >
             <Plus className="w-6 h-6" />
           </Link>
