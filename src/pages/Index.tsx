@@ -28,7 +28,8 @@ export default function Index() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ideas')
-        .select('*');
+        .select('*')
+        .order('votes', { ascending: false });  // Sort by votes in descending order
       
       if (error) throw error;
       return data as Idea[];
