@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -7,9 +8,11 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function Toaster() {
   const { toasts } = useToast()
+  const isMobile = useIsMobile()
 
   return (
     <ToastProvider>
@@ -27,7 +30,8 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport className={isMobile ? "bottom-0 top-auto" : ""} />
     </ToastProvider>
   )
 }
+
