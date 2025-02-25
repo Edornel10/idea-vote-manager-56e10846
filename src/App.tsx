@@ -4,7 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
+import Browse from "./pages/Browse";
 import Create from "./pages/Create";
 import Vote from "./pages/Vote";
 import NotFound from "./pages/NotFound";
@@ -20,8 +22,8 @@ const Navigation = () => {
         <div className="flex justify-between h-16">
           <div className="flex space-x-8 items-center">
             <Link
-              to="/"
-              className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
+              to="/browse"
+              className={`nav-link ${location.pathname === "/browse" ? "active" : ""}`}
             >
               Browse
             </Link>
@@ -54,8 +56,30 @@ const App = () => (
         <div className="pt-16">
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/create" element={<Create />} />
-            <Route path="/vote" element={<Vote />} />
+            <Route
+              path="/browse"
+              element={
+                <ProtectedRoute>
+                  <Browse />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create"
+              element={
+                <ProtectedRoute>
+                  <Create />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vote"
+              element={
+                <ProtectedRoute>
+                  <Vote />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

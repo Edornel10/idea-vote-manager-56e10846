@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Search, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,73 +22,81 @@ interface Idea {
 const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
 
 export default function Index() {
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const { data: ideas = [], isLoading } = useQuery({
-    queryKey: ['ideas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ideas')
-        .select('*')
-        .order('votes', { ascending: false });
-      
-      if (error) throw error;
-      return data as Idea[];
-    }
-  });
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      if (session) {
+        navigate("/browse");
+      }
+    };
+    
+    checkSession();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+      if (session) {
+        navigate("/browse");
+      }
     });
 
-    if (error) {
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Successfully logged in!");
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Successfully signed up! Please check your email for verification.");
+      }
+    } catch (error: any) {
       toast.error(error.message);
-    } else {
-      toast.success("Successfully logged in!");
-      navigate("/");
     }
   };
 
-  const filteredIdeas = ideas.filter((idea) => {
-    const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
-                         idea.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#222222] flex items-center justify-center">
-        <p className="text-white">Loading ideas...</p>
-      </div>
-    );
+  if (isAuthenticated) {
+    return null; // Will redirect via useEffect
   }
 
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-md mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
           <h1 className="text-4xl font-bold text-white mb-2">
-            Welcome Back
+            {isLogin ? "Welcome Back" : "Create Account"}
           </h1>
           <p className="text-gray-400">
-            Log in to continue
+            {isLogin ? "Log in to continue" : "Sign up to get started"}
           </p>
         </motion.div>
 
-        <Card className="bg-[#333333] p-6 border-0 mb-8">
-          <form onSubmit={handleLogin} className="space-y-4">
+        <Card className="bg-[#333333] p-6 border-0">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <Input
                 type="email"
@@ -113,86 +121,19 @@ export default function Index() {
               type="submit"
               className="w-full bg-[#ea384c] hover:bg-[#ea384c]/90 text-white"
             >
-              Login
+              {isLogin ? "Login" : "Sign Up"}
             </Button>
           </form>
-        </Card>
-
-        <div className="flex gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Search ideas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 w-full bg-[#444444] border-0 text-white placeholder:text-gray-400"
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[180px] bg-[#444444] border-0 text-white">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <motion.div 
-          className="grid gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {filteredIdeas.map((idea) => (
-            <motion.div
-              key={idea.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+          
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-gray-400 hover:text-white transition-colors"
             >
-              <Card className="bg-[#333333] p-6 border-0">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-1">
-                      {idea.title}
-                    </h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ea384c]/20 text-[#ea384c]">
-                      {idea.category}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-white">
-                      {idea.votes}
-                    </span>
-                    <p className="text-sm text-gray-400">votes</p>
-                  </div>
-                </div>
-                <p className="text-gray-300">{idea.description}</p>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <motion.div 
-          className="fixed bottom-8 right-8"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Link
-            to="/create"
-            className="flex items-center justify-center w-14 h-14 bg-[#ea384c] text-white rounded-full shadow-lg hover:bg-[#ea384c]/90 transition-colors duration-200"
-          >
-            <Plus className="w-6 h-6" />
-          </Link>
-        </motion.div>
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+            </button>
+          </div>
+        </Card>
       </div>
     </div>
   );
