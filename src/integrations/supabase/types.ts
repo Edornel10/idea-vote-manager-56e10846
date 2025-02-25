@@ -9,27 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      auth_users: {
-        Row: {
-          created_at: string | null
-          id: string
-          password: string
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          password: string
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          password?: string
-          username?: string
-        }
-        Relationships: []
-      }
       ideas: {
         Row: {
           category: string
@@ -56,32 +35,6 @@ export type Database = {
           votes?: number | null
         }
         Relationships: []
-      }
-      user_roles: {
-        Row: {
-          id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          role: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "auth_users"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
