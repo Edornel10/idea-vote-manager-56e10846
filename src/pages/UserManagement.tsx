@@ -1,35 +1,17 @@
 
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
+// Dummy data for users
+const dummyUsers = [
+  { id: '1', username: 'john_doe', role: 'admin' },
+  { id: '2', username: 'jane_smith', role: 'moderator' },
+  { id: '3', username: 'mike_wilson', role: 'user' },
+  { id: '4', username: 'sarah_jones', role: 'user' },
+  { id: '5', username: 'alex_brown', role: 'moderator' },
+];
 
 export default function UserManagement() {
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('auth_users')
-        .select(`
-          *,
-          user_roles (
-            role
-          )
-        `);
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#222222] flex items-center justify-center">
-        <p className="text-white">Loading users...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -48,7 +30,7 @@ export default function UserManagement() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          {users.map((user) => (
+          {dummyUsers.map((user) => (
             <motion.div
               key={user.id}
               layout
@@ -62,11 +44,11 @@ export default function UserManagement() {
                       {user.username}
                     </h3>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ea384c]/20 text-[#ea384c]">
-                      {user.user_roles?.role || 'No role'}
+                      {user.role}
                     </span>
                   </div>
                   <div className="text-sm text-gray-400">
-                    ID: {user.id.slice(0, 8)}...
+                    ID: {user.id}
                   </div>
                 </div>
               </Card>

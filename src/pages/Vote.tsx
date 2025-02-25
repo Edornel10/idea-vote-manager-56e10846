@@ -4,13 +4,11 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthForm } from "@/components/vote/AuthForm";
 import { SearchControls } from "@/components/vote/SearchControls";
 import { IdeaCard } from "@/components/vote/IdeaCard";
 import type { Idea } from "@/types/idea";
 
 export default function Vote() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -71,10 +69,6 @@ export default function Vote() {
       });
     }
   };
-
-  if (!isAuthenticated) {
-    return <AuthForm onAuthenticate={setIsAuthenticated} />;
-  }
 
   if (isLoading) {
     return (
