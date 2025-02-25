@@ -1,29 +1,21 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, Search, Plus, LogOut } from "lucide-react";
+import { Filter, Search, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-interface Idea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  votes: number;
-}
-
-const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
+import { categories } from "@/types/idea";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ['ideas'],
@@ -34,14 +26,25 @@ export default function Browse() {
         .order('votes', { ascending: false });
       
       if (error) throw error;
-      return data as Idea[];
+      return data;
     }
   });
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    toast.success("Successfully logged out!");
-    navigate("/");
+  const handleDelete = async (ideaId: string) => {
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .delete()
+        .eq('id', ideaId);
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      toast.success("Idea deleted successfully");
+    } catch (error) {
+      console.error('Error deleting idea:', error);
+      toast.error("Failed to delete idea");
+    }
   };
 
   const filteredIdeas = ideas.filter((idea) => {
@@ -62,29 +65,15 @@ export default function Browse() {
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Explore Ideas
-            </h1>
-            <p className="text-gray-400">
-              Discover and filter through innovative ideas
-            </p>
-          </motion.div>
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            className="text-gray-400 hover:text-white"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-4xl font-bold text-white mb-2">Explore Ideas</h1>
+          <p className="text-gray-400">Discover and filter through innovative ideas</p>
+        </motion.div>
 
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-4 my-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
@@ -134,11 +123,21 @@ export default function Browse() {
                       {idea.category}
                     </span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-white">
-                      {idea.votes}
-                    </span>
-                    <p className="text-sm text-gray-400">votes</p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-white">
+                        {idea.votes}
+                      </span>
+                      <p className="text-sm text-gray-400">votes</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(idea.id)}
+                      className="text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
                   </div>
                 </div>
                 <p className="text-gray-300">{idea.description}</p>

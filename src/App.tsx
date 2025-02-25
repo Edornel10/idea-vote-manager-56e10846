@@ -4,12 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Index from "./pages/Index";
 import Browse from "./pages/Browse";
 import Create from "./pages/Create";
 import Vote from "./pages/Vote";
 import NotFound from "./pages/NotFound";
+import UserManagement from "./pages/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -23,21 +22,35 @@ const Navigation = () => {
           <div className="flex space-x-8 items-center">
             <Link
               to="/browse"
-              className={`nav-link ${location.pathname === "/browse" ? "active" : ""}`}
+              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                location.pathname === "/browse" ? "bg-[#ea384c]/10" : ""
+              }`}
             >
               Browse
             </Link>
             <Link
               to="/create"
-              className={`nav-link ${location.pathname === "/create" ? "active" : ""}`}
+              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                location.pathname === "/create" ? "bg-[#ea384c]/10" : ""
+              }`}
             >
               Create
             </Link>
             <Link
               to="/vote"
-              className={`nav-link ${location.pathname === "/vote" ? "active" : ""}`}
+              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                location.pathname === "/vote" ? "bg-[#ea384c]/10" : ""
+              }`}
             >
               Vote
+            </Link>
+            <Link
+              to="/users"
+              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                location.pathname === "/users" ? "bg-[#ea384c]/10" : ""
+              }`}
+            >
+              Users
             </Link>
           </div>
         </div>
@@ -55,31 +68,11 @@ const App = () => (
         <Navigation />
         <div className="pt-16">
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route
-              path="/browse"
-              element={
-                <ProtectedRoute>
-                  <Browse />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/create"
-              element={
-                <ProtectedRoute>
-                  <Create />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/vote"
-              element={
-                <ProtectedRoute>
-                  <Vote />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/" element={<Browse />} />
+            <Route path="/browse" element={<Browse />} />
+            <Route path="/create" element={<Create />} />
+            <Route path="/vote" element={<Vote />} />
+            <Route path="/users" element={<UserManagement />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
