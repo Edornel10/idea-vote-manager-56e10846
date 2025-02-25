@@ -7,7 +7,7 @@ interface User {
   role: 'admin' | 'standard';
 }
 
-type NavigationCommand = 'browse' | 'create' | 'vote' | 'users' | 'auth';
+export type NavigationCommand = 'browse' | 'create' | 'vote' | 'users' | 'auth';
 
 export function useAuth(requireAuth = true) {
   const [user, setUser] = useState<User | null>(null);
