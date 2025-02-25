@@ -40,21 +40,10 @@ export function useAuth(requireAuth = true) {
     }
   }, [user, isLoading, requireAuth, navigate, location]);
 
-  const login = async (userData: User) => {
-    return new Promise<void>((resolve) => {
-      // Update localStorage first
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Update state and ensure it's set before navigating
-      setUser(userData);
-      
-      // Use a minimal timeout to ensure state is updated
-      setTimeout(() => {
-        const from = location.state?.from || '/browse';
-        navigate(from, { replace: true });
-        resolve();
-      }, 0);
-    });
+  const login = (userData: User) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    window.location.href = '/browse';
   };
 
   const logout = () => {
