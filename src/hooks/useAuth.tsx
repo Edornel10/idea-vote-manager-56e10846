@@ -39,8 +39,7 @@ export function useAuth(requireAuth = true) {
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    // Force a full page refresh and redirect to auth page
-    window.location.href = '/auth';
+    window.location.replace('/auth');
   };
 
   return { user, isLoading, login, logout };
