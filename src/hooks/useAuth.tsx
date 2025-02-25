@@ -17,7 +17,8 @@ export function useAuth(requireAuth = true) {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
-        setUser(JSON.parse(userStr));
+        const parsedUser = JSON.parse(userStr);
+        setUser(parsedUser);
       } catch (e) {
         console.error('Error parsing user data:', e);
         localStorage.removeItem('user');
@@ -29,11 +30,10 @@ export function useAuth(requireAuth = true) {
   useEffect(() => {
     if (!isLoading) {
       if (requireAuth && !user) {
-        // Save the attempted URL to redirect back after login
-        navigate('/auth', { state: { from: location.pathname } });
+        navigate('/auth', { state: { from: location.pathname }, replace: true });
       } else if (user && location.pathname === '/auth') {
-        // If user is logged in and tries to access auth page, redirect to browse
-        navigate('/browse');
+        const from = location.state?.from || '/browse';
+        navigate(from, { replace: true });
       }
     }
   }, [user, isLoading, requireAuth, navigate, location]);
@@ -41,13 +41,14 @@ export function useAuth(requireAuth = true) {
   const login = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    navigate('/browse');
+    const from = location.state?.from || '/browse';
+    navigate(from, { replace: true });
   };
 
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    navigate('/auth');
+    navigate('/auth', { replace: true });
   };
 
   return { user, isLoading, login, logout };
