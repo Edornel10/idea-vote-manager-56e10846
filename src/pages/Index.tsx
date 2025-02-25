@@ -22,15 +22,20 @@ export default function Index() {
         .from('auth_users')
         .select('*')
         .eq('username', username)
-        .single();
+        .maybeSingle();
 
       if (userError) {
         console.error('User fetch error:', userError);
+        toast.error("An error occurred while fetching user data");
+        return;
+      }
+
+      if (!userData) {
         toast.error("Invalid username or password");
         return;
       }
 
-      if (!userData || userData.password !== password) {
+      if (userData.password !== password) {
         toast.error("Invalid username or password");
         return;
       }
@@ -40,11 +45,17 @@ export default function Index() {
         .from('user_roles')
         .select('*')
         .eq('user_id', userData.id)
-        .single();
+        .maybeSingle();
 
       if (roleError) {
         console.error('Role fetch error:', roleError);
         toast.error("Error fetching user role");
+        return;
+      }
+
+      if (!roleData) {
+        console.error('No role found for user');
+        toast.error("No role assigned to user");
         return;
       }
       
