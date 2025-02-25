@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface User {
   id: string;
@@ -11,6 +11,7 @@ export function useAuth(requireAuth = true) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -26,23 +27,27 @@ export function useAuth(requireAuth = true) {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && requireAuth && !user) {
-      navigate('/auth');
+    if (!isLoading) {
+      if (requireAuth && !user) {
+        // Save the attempted URL to redirect back after login
+        navigate('/auth', { state: { from: location.pathname } });
+      } else if (user && location.pathname === '/auth') {
+        // If user is logged in and tries to access auth page, redirect to browse
+        navigate('/browse');
+      }
     }
-  }, [user, isLoading, requireAuth, navigate]);
+  }, [user, isLoading, requireAuth, navigate, location]);
 
   const login = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    // Force a page reload to ensure all components get the updated state
-    window.location.href = '/browse';
+    navigate('/browse');
   };
 
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    // Force a page reload to ensure all components get the updated state
-    window.location.href = '/auth';
+    navigate('/auth');
   };
 
   return { user, isLoading, login, logout };

@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
-import { Menu, X } from "lucide-react"; // Import icons for mobile menu
+import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Browse from "./pages/Browse";
 import Create from "./pages/Create";
@@ -19,8 +19,9 @@ import { cn } from "./lib/utils";
 const queryClient = new QueryClient();
 
 const Navigation = () => {
-  const { user, logout } = useAuth(true);
+  const { user, logout } = useAuth(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const navItems = [
     { path: "/browse", label: "Browse", requiredAuth: true },
@@ -30,6 +31,8 @@ const Navigation = () => {
     { path: "/auth", label: "Sign In", requiredAuth: false },
   ];
 
+  const isCurrentPath = (path: string) => location.pathname === path;
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -38,7 +41,6 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Mobile menu button */}
           <button
             onClick={toggleMobileMenu}
             className="inline-flex items-center justify-center p-2 rounded-md text-white md:hidden"
@@ -50,7 +52,6 @@ const Navigation = () => {
             )}
           </button>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex md:space-x-8 md:items-center">
             {navItems.map((item) => {
               if (!user && item.requiredAuth) return null;
@@ -63,7 +64,8 @@ const Navigation = () => {
                   to={item.path}
                   className={cn(
                     "text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium",
-                    "transition-colors duration-200"
+                    "transition-colors duration-200",
+                    isCurrentPath(item.path) && "bg-primary/10"
                   )}
                 >
                   {item.label}
@@ -72,7 +74,6 @@ const Navigation = () => {
             })}
           </div>
 
-          {/* Desktop Logout Button */}
           {user && (
             <button
               onClick={logout}
@@ -82,7 +83,6 @@ const Navigation = () => {
             </button>
           )}
 
-          {/* Mobile Navigation */}
           <div
             className={cn(
               "absolute top-16 left-0 right-0 bg-background border-b border-border md:hidden",
@@ -99,7 +99,10 @@ const Navigation = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className="text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium"
+                    className={cn(
+                      "text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium",
+                      isCurrentPath(item.path) && "bg-primary/10"
+                    )}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.label}
