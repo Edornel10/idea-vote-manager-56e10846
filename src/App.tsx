@@ -18,11 +18,15 @@ const queryClient = new QueryClient();
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth(false);
+  const { user, logout } = useAuth(true);  // Set to true to force authentication check
 
   const handleLogout = () => {
     logout();
     navigate('/auth');
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path ? "bg-[#ea384c]/10" : "";
   };
 
   return (
@@ -34,34 +38,26 @@ const Navigation = () => {
               <>
                 <Link
                   to="/browse"
-                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                    location.pathname === "/browse" ? "bg-[#ea384c]/10" : ""
-                  }`}
+                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/browse")}`}
                 >
                   Browse
                 </Link>
                 <Link
                   to="/create"
-                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                    location.pathname === "/create" ? "bg-[#ea384c]/10" : ""
-                  }`}
+                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/create")}`}
                 >
                   Create
                 </Link>
                 <Link
                   to="/vote"
-                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                    location.pathname === "/vote" ? "bg-[#ea384c]/10" : ""
-                  }`}
+                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/vote")}`}
                 >
                   Vote
                 </Link>
                 {user.role === 'admin' && (
                   <Link
                     to="/users"
-                    className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                      location.pathname === "/users" ? "bg-[#ea384c]/10" : ""
-                    }`}
+                    className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/users")}`}
                   >
                     Users
                   </Link>
@@ -70,9 +66,7 @@ const Navigation = () => {
             ) : (
               <Link
                 to="/auth"
-                className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                  location.pathname === "/auth" ? "bg-[#ea384c]/10" : ""
-                }`}
+                className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/auth")}`}
               >
                 Sign In
               </Link>
