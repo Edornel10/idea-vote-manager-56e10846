@@ -2,8 +2,6 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, Search, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -11,73 +9,59 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-interface Idea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  votes: number;
-}
-
-const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
-
 export default function Index() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      if (session) {
-        navigate("/browse");
-      }
-    };
-    
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (session) {
-        navigate("/browse");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
+      const { data, error } = await supabase
+        .from('auth_users')
+        .select()
+        .eq('username', username)
+        .single();
+
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        if (!data || data.password !== password) {
+          toast.error("Invalid username or password");
+          return;
+        }
+        
+        // Set session data
+        localStorage.setItem('user', JSON.stringify({
+          id: data.id,
+          username: data.username
+        }));
+        
         toast.success("Successfully logged in!");
+        navigate("/browse");
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success("Successfully signed up! Please check your email for verification.");
+        // Check if username already exists
+        if (data) {
+          toast.error("Username already taken");
+          return;
+        }
+
+        // Create new user
+        const { error: insertError } = await supabase
+          .from('auth_users')
+          .insert([
+            { username, password }
+          ]);
+
+        if (insertError) throw insertError;
+
+        toast.success("Successfully signed up! You can now login.");
+        setIsLogin(true);
       }
     } catch (error: any) {
       toast.error(error.message);
     }
   };
-
-  if (isAuthenticated) {
-    return null; // Will redirect via useEffect
-  }
 
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
@@ -99,10 +83,10 @@ export default function Index() {
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
                 required
               />

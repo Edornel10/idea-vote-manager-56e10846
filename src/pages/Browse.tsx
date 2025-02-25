@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,14 +38,10 @@ export default function Browse() {
     }
   });
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Successfully logged out!");
-      navigate("/");
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    toast.success("Successfully logged out!");
+    navigate("/");
   };
 
   const filteredIdeas = ideas.filter((idea) => {
