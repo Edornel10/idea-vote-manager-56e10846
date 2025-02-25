@@ -31,7 +31,6 @@ export function useAuth(requireAuth = true) {
     }
   }, [user, isLoading, requireAuth, navigate]);
 
-  // Add login and logout functions
   const login = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
@@ -40,6 +39,8 @@ export function useAuth(requireAuth = true) {
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
+    // Force a full page refresh and redirect to auth page
+    window.location.href = '/auth';
   };
 
   return { user, isLoading, login, logout };
