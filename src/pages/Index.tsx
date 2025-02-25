@@ -40,9 +40,6 @@ export default function Index() {
         .rpc('verify_password', {
           input_password: password,
           stored_hash: userData.password
-        } as {
-          input_password: string,
-          stored_hash: string
         });
 
       if (verifyError) {
