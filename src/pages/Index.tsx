@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Search, Plus } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Idea {
   id: string;
@@ -22,6 +24,9 @@ const categories = ["All", "Education", "Environment", "Community", "Technology"
 export default function Index() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ['ideas'],
@@ -29,12 +34,27 @@ export default function Index() {
       const { data, error } = await supabase
         .from('ideas')
         .select('*')
-        .order('votes', { ascending: false });  // Sort by votes in descending order
+        .order('votes', { ascending: false });
       
       if (error) throw error;
       return data as Idea[];
     }
   });
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Successfully logged in!");
+      navigate("/");
+    }
+  };
 
   const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -60,12 +80,43 @@ export default function Index() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl font-bold text-white mb-2">
-            Explore Ideas
+            Welcome Back
           </h1>
           <p className="text-gray-400">
-            Discover and filter through innovative ideas
+            Log in to continue
           </p>
         </motion.div>
+
+        <Card className="bg-[#333333] p-6 border-0 mb-8">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
+                required
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-[#ea384c] hover:bg-[#ea384c]/90 text-white"
+            >
+              Login
+            </Button>
+          </form>
+        </Card>
 
         <div className="flex gap-4 mb-8">
           <div className="relative flex-1">
