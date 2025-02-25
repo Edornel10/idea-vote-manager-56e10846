@@ -17,7 +17,7 @@ export default function Index() {
     e.preventDefault();
     
     try {
-      // First get the user
+      // First check if user exists and get their hashed password
       const { data: userData, error: userError } = await supabase
         .from('auth_users')
         .select('*')
@@ -35,12 +35,25 @@ export default function Index() {
         return;
       }
 
-      if (userData.password !== password) {
+      // Verify password using pgcrypto's crypt function
+      const { data: verifyData, error: verifyError } = await supabase
+        .rpc('verify_password', {
+          input_password: password,
+          stored_hash: userData.password
+        });
+
+      if (verifyError) {
+        console.error('Password verification error:', verifyError);
+        toast.error("Error verifying password");
+        return;
+      }
+
+      if (!verifyData) {
         toast.error("Invalid username or password");
         return;
       }
 
-      // Then get their role
+      // If password is correct, get user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('*')
