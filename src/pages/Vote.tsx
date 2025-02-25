@@ -1,28 +1,15 @@
 
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { ThumbsUp, Search, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Idea {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  votes: number;
-}
-
-const VOTING_PASSWORD = "ideas123"; // In a real app, this would be stored securely
-const categories = ["All", "Education", "Environment", "Community", "Technology", "Health"];
+import { AuthForm } from "@/components/vote/AuthForm";
+import { SearchControls } from "@/components/vote/SearchControls";
+import { IdeaCard } from "@/components/vote/IdeaCard";
+import type { Idea } from "@/types/idea";
 
 export default function Vote() {
-  const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -49,22 +36,6 @@ export default function Vote() {
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-  const handleAuthenticate = () => {
-    if (password === VOTING_PASSWORD) {
-      setIsAuthenticated(true);
-      toast({
-        title: "Success!",
-        description: "You can now vote for ideas.",
-      });
-    } else {
-      toast({
-        title: "Error",
-        description: "Incorrect password",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleVote = async (ideaId: string) => {
     if (votedIdeas.includes(ideaId)) {
@@ -102,34 +73,7 @@ export default function Vote() {
   };
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#222222] flex items-center justify-center px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full"
-        >
-          <Card className="bg-[#333333] p-6 border-0">
-            <h2 className="text-2xl font-bold text-center mb-6 text-white">Enter Voting Password</h2>
-            <div className="space-y-4">
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
-              />
-              <Button
-                className="w-full bg-[#ea384c] hover:bg-[#ea384c]/90"
-                onClick={handleAuthenticate}
-              >
-                Access Voting
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-    );
+    return <AuthForm onAuthenticate={setIsAuthenticated} />;
   }
 
   if (isLoading) {
@@ -152,31 +96,12 @@ export default function Vote() {
           <p className="text-gray-400">Support the ideas you believe in</p>
         </motion.div>
 
-        <div className="flex gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Search ideas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 w-full bg-[#444444] border-0 text-white placeholder:text-gray-400"
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[180px] bg-[#444444] border-0 text-white">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SearchControls
+          search={search}
+          selectedCategory={selectedCategory}
+          onSearchChange={setSearch}
+          onCategoryChange={setSelectedCategory}
+        />
 
         <motion.div 
           className="grid gap-6"
@@ -185,36 +110,12 @@ export default function Vote() {
           transition={{ delay: 0.2 }}
         >
           {filteredIdeas.map((idea) => (
-            <motion.div
+            <IdeaCard
               key={idea.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <Card className="bg-[#333333] p-6 border-0">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-1">{idea.title}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ea384c]/20 text-[#ea384c]">
-                      {idea.category}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-white">{idea.votes}</span>
-                    <p className="text-sm text-gray-400">votes</p>
-                  </div>
-                </div>
-                <p className="text-gray-300 mb-4">{idea.description}</p>
-                <Button
-                  className={`w-full ${votedIdeas.includes(idea.id) ? 'bg-gray-600' : 'bg-[#ea384c] hover:bg-[#ea384c]/90'}`}
-                  disabled={votedIdeas.includes(idea.id)}
-                  onClick={() => handleVote(idea.id)}
-                >
-                  <ThumbsUp className="w-4 h-4 mr-2" />
-                  {votedIdeas.includes(idea.id) ? "Already Voted" : "Vote"}
-                </Button>
-              </Card>
-            </motion.div>
+              idea={idea}
+              hasVoted={votedIdeas.includes(idea.id)}
+              onVote={handleVote}
+            />
           ))}
         </motion.div>
       </div>
