@@ -20,8 +20,6 @@ const Navigation = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth(false);
 
-  if (!user) return null;
-
   const handleLogout = () => {
     logout();
     navigate('/auth');
@@ -32,48 +30,63 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex space-x-8 items-center">
-            <Link
-              to="/browse"
-              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                location.pathname === "/browse" ? "bg-[#ea384c]/10" : ""
-              }`}
-            >
-              Browse
-            </Link>
-            <Link
-              to="/create"
-              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                location.pathname === "/create" ? "bg-[#ea384c]/10" : ""
-              }`}
-            >
-              Create
-            </Link>
-            <Link
-              to="/vote"
-              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                location.pathname === "/vote" ? "bg-[#ea384c]/10" : ""
-              }`}
-            >
-              Vote
-            </Link>
-            {user.role === 'admin' && (
+            {user ? (
+              <>
+                <Link
+                  to="/browse"
+                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === "/browse" ? "bg-[#ea384c]/10" : ""
+                  }`}
+                >
+                  Browse
+                </Link>
+                <Link
+                  to="/create"
+                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === "/create" ? "bg-[#ea384c]/10" : ""
+                  }`}
+                >
+                  Create
+                </Link>
+                <Link
+                  to="/vote"
+                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === "/vote" ? "bg-[#ea384c]/10" : ""
+                  }`}
+                >
+                  Vote
+                </Link>
+                {user.role === 'admin' && (
+                  <Link
+                    to="/users"
+                    className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                      location.pathname === "/users" ? "bg-[#ea384c]/10" : ""
+                    }`}
+                  >
+                    Users
+                  </Link>
+                )}
+              </>
+            ) : (
               <Link
-                to="/users"
+                to="/auth"
                 className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                  location.pathname === "/users" ? "bg-[#ea384c]/10" : ""
+                  location.pathname === "/auth" ? "bg-[#ea384c]/10" : ""
                 }`}
               >
-                Users
+                Sign In
               </Link>
             )}
           </div>
           <div className="flex items-center">
-            <button
-              onClick={handleLogout}
-              className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              Logout
-            </button>
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </div>
