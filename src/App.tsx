@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
 import Browse from "./pages/Browse";
 import Create from "./pages/Create";
 import Vote from "./pages/Vote";
@@ -17,7 +17,8 @@ import { cn } from "./lib/utils";
 const queryClient = new QueryClient();
 
 const Navigation = () => {
-  const { user } = useAuth(true);
+  const { user, logout } = useAuth(true);
+  const navigate = useNavigate();
 
   const navItems = [
     { path: "/browse", label: "Browse", requiredAuth: true },
@@ -26,6 +27,11 @@ const Navigation = () => {
     { path: "/users", label: "Users", requiredAuth: true, adminOnly: true },
     { path: "/auth", label: "Sign In", requiredAuth: false },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth');
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -51,6 +57,14 @@ const Navigation = () => {
               );
             })}
           </div>
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </nav>
