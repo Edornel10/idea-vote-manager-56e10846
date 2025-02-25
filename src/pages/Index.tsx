@@ -2,62 +2,41 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function Index() {
-  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       const { data, error } = await supabase
         .from('auth_users')
-        .select()
+        .select('*, user_roles!inner(*)')
         .eq('username', username)
         .single();
 
-      if (isLogin) {
-        if (!data || data.password !== password) {
-          toast.error("Invalid username or password");
-          return;
-        }
-        
-        // Set session data
-        localStorage.setItem('user', JSON.stringify({
-          id: data.id,
-          username: data.username
-        }));
-        
-        toast.success("Successfully logged in!");
-        navigate("/browse");
-      } else {
-        // Check if username already exists
-        if (data) {
-          toast.error("Username already taken");
-          return;
-        }
-
-        // Create new user
-        const { error: insertError } = await supabase
-          .from('auth_users')
-          .insert([
-            { username, password }
-          ]);
-
-        if (insertError) throw insertError;
-
-        toast.success("Successfully signed up! You can now login.");
-        setIsLogin(true);
+      if (!data || data.password !== password) {
+        toast.error("Invalid username or password");
+        return;
       }
+      
+      // Set session data
+      localStorage.setItem('user', JSON.stringify({
+        id: data.id,
+        username: data.username,
+        role: data.user_roles[0].role
+      }));
+      
+      toast.success("Successfully logged in!");
+      navigate("/browse");
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -71,16 +50,12 @@ export default function Index() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-white mb-2">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </h1>
-          <p className="text-gray-400">
-            {isLogin ? "Log in to continue" : "Sign up to get started"}
-          </p>
+          <h1 className="text-4xl font-bold text-white mb-2">Welcome Back</h1>
+          <p className="text-gray-400">Log in to continue</p>
         </motion.div>
 
         <Card className="bg-[#333333] p-6 border-0">
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <Input
                 type="text"
@@ -105,18 +80,9 @@ export default function Index() {
               type="submit"
               className="w-full bg-[#ea384c] hover:bg-[#ea384c]/90 text-white"
             >
-              {isLogin ? "Login" : "Sign Up"}
+              Login
             </Button>
           </form>
-          
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
-            </button>
-          </div>
         </Card>
       </div>
     </div>
