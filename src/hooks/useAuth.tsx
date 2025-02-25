@@ -7,6 +7,8 @@ interface User {
   role: 'admin' | 'standard';
 }
 
+type NavigationCommand = 'browse' | 'create' | 'vote' | 'users' | 'auth';
+
 export function useAuth(requireAuth = true) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,5 +53,19 @@ export function useAuth(requireAuth = true) {
     navigate('/auth', { replace: true });
   };
 
-  return { user, isLoading, login, logout };
+  const navigateTo = (command: NavigationCommand) => {
+    if (!user && command !== 'auth') {
+      navigate('/auth', { state: { from: `/${command}` }, replace: true });
+      return;
+    }
+
+    if (user && command === 'auth') {
+      navigate('/browse', { replace: true });
+      return;
+    }
+
+    navigate(`/${command}`, { replace: true });
+  };
+
+  return { user, isLoading, login, logout, navigateTo };
 }

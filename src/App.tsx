@@ -19,19 +19,19 @@ import { cn } from "./lib/utils";
 const queryClient = new QueryClient();
 
 const Navigation = () => {
-  const { user, logout } = useAuth(false);
+  const { user, logout, navigateTo } = useAuth(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   const navItems = [
-    { path: "/browse", label: "Browse", requiredAuth: true },
-    { path: "/create", label: "Create", requiredAuth: true },
-    { path: "/vote", label: "Vote", requiredAuth: true },
-    { path: "/users", label: "Users", requiredAuth: true, adminOnly: true },
-    { path: "/auth", label: "Sign In", requiredAuth: false },
+    { path: "browse", label: "Browse", requiredAuth: true },
+    { path: "create", label: "Create", requiredAuth: true },
+    { path: "vote", label: "Vote", requiredAuth: true },
+    { path: "users", label: "Users", requiredAuth: true, adminOnly: true },
+    { path: "auth", label: "Sign In", requiredAuth: false },
   ];
 
-  const isCurrentPath = (path: string) => location.pathname === path;
+  const isCurrentPath = (path: string) => location.pathname === `/${path}`;
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -56,12 +56,12 @@ const Navigation = () => {
             {navItems.map((item) => {
               if (!user && item.requiredAuth) return null;
               if (item.adminOnly && user?.role !== 'admin') return null;
-              if (user && item.path === '/auth') return null;
+              if (user && item.path === 'auth') return null;
 
               return (
-                <Link
+                <button
                   key={item.path}
-                  to={item.path}
+                  onClick={() => navigateTo(item.path as NavigationCommand)}
                   className={cn(
                     "text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium",
                     "transition-colors duration-200",
@@ -69,7 +69,7 @@ const Navigation = () => {
                   )}
                 >
                   {item.label}
-                </Link>
+                </button>
               );
             })}
           </div>
@@ -93,25 +93,30 @@ const Navigation = () => {
               {navItems.map((item) => {
                 if (!user && item.requiredAuth) return null;
                 if (item.adminOnly && user?.role !== 'admin') return null;
-                if (user && item.path === '/auth') return null;
+                if (user && item.path === 'auth') return null;
 
                 return (
-                  <Link
+                  <button
                     key={item.path}
-                    to={item.path}
+                    onClick={() => {
+                      navigateTo(item.path as NavigationCommand);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={cn(
-                      "text-white hover:text-gray-300 block px-3 py-2 rounded-md text-base font-medium",
+                      "text-white hover:text-gray-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium",
                       isCurrentPath(item.path) && "bg-primary/10"
                     )}
-                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.label}
-                  </Link>
+                  </button>
                 );
               })}
               {user && (
                 <button
-                  onClick={logout}
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="text-white hover:text-gray-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium"
                 >
                   Logout
