@@ -34,13 +34,15 @@ export function useAuth(requireAuth = true) {
   const login = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    navigate('/browse');
+    // Force a page reload to ensure all components get the updated state
+    window.location.href = '/browse';
   };
 
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    navigate('/auth');
+    // Force a page reload to ensure all components get the updated state
+    window.location.href = '/auth';
   };
 
   return { user, isLoading, login, logout };
