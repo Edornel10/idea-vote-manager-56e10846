@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import Browse from "./pages/Browse";
 import Create from "./pages/Create";
 import Vote from "./pages/Vote";
@@ -17,9 +17,15 @@ const queryClient = new QueryClient();
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth(false);
 
   if (!user) return null;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth');
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -63,10 +69,7 @@ const Navigation = () => {
           </div>
           <div className="flex items-center">
             <button
-              onClick={() => {
-                logout();
-                window.location.href = '/auth';
-              }}
+              onClick={handleLogout}
               className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
             >
               Logout
