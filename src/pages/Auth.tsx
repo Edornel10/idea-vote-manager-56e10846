@@ -28,6 +28,7 @@ export default function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setIsLoading(true);
 
     try {
@@ -78,6 +79,7 @@ export default function Auth() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="bg-[#333333] border-0 text-white placeholder:text-gray-400"
+              autoComplete="username"
             />
           </div>
           <div>
@@ -87,6 +89,7 @@ export default function Auth() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="bg-[#333333] border-0 text-white placeholder:text-gray-400"
+              autoComplete="current-password"
             />
           </div>
           <Button
