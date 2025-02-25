@@ -32,7 +32,7 @@ export default function Index() {
       // Check if user exists
       const { data: user, error: userError } = await supabase
         .from('auth_users')
-        .select<'auth_users', UserData>('*')
+        .select()
         .eq('username', username)
         .single();
 
@@ -43,7 +43,7 @@ export default function Index() {
 
       // Verify password
       const { data: isValid, error: verifyError } = await supabase
-        .rpc<boolean>('verify_password', {
+        .rpc('verify_password', {
           input_password: password,
           stored_hash: user.password
         });
@@ -56,7 +56,7 @@ export default function Index() {
       // Get user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select<'user_roles', UserRole>('*')
+        .select()
         .eq('user_id', user.id)
         .single();
 
