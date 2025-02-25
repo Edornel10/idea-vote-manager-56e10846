@@ -47,7 +47,9 @@ export default function Auth() {
       // Use the login function from useAuth
       login(userData);
       toast.success("Login successful");
-      navigate('/browse', { replace: true });
+      
+      // Force a full page refresh and redirect
+      window.location.href = '/browse';
     } catch (error) {
       console.error('Error:', error);
       toast.error("Failed to login");
