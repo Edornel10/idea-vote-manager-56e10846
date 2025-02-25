@@ -17,28 +17,49 @@ export default function Index() {
     e.preventDefault();
     
     try {
-      const { data, error } = await supabase
+      // First get the user
+      const { data: userData, error: userError } = await supabase
         .from('auth_users')
-        .select('*, user_roles!inner(*)')
+        .select('*')
         .eq('username', username)
         .single();
 
-      if (!data || data.password !== password) {
+      if (userError) {
+        console.error('User fetch error:', userError);
         toast.error("Invalid username or password");
+        return;
+      }
+
+      if (!userData || userData.password !== password) {
+        toast.error("Invalid username or password");
+        return;
+      }
+
+      // Then get their role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userData.id)
+        .single();
+
+      if (roleError) {
+        console.error('Role fetch error:', roleError);
+        toast.error("Error fetching user role");
         return;
       }
       
       // Set session data
       localStorage.setItem('user', JSON.stringify({
-        id: data.id,
-        username: data.username,
-        role: data.user_roles[0].role
+        id: userData.id,
+        username: userData.username,
+        role: roleData.role
       }));
       
       toast.success("Successfully logged in!");
       navigate("/browse");
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Login error:', error);
+      toast.error("An error occurred during login");
     }
   };
 
