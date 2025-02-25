@@ -36,15 +36,51 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          id: string
+          password_hash: string
+          role: Database["public"]["Enums"]["user_role"]
+          username: string
+        }
+        Insert: {
+          id?: string
+          password_hash: string
+          role?: Database["public"]["Enums"]["user_role"]
+          username: string
+        }
+        Update: {
+          id?: string
+          password_hash?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      hash_password: {
+        Args: {
+          password: string
+        }
+        Returns: string
+      }
+      verify_password: {
+        Args: {
+          username: string
+          password: string
+        }
+        Returns: {
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "standard"
     }
     CompositeTypes: {
       [_ in never]: never
