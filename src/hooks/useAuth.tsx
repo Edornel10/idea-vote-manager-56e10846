@@ -40,9 +40,14 @@ export function useAuth(requireAuth = true) {
     }
   }, [user, isLoading, requireAuth, navigate, location]);
 
-  const login = (userData: User) => {
+  const login = async (userData: User) => {
+    // First update localStorage
     localStorage.setItem('user', JSON.stringify(userData));
+    
+    // Then update state
     setUser(userData);
+
+    // Finally navigate
     const from = location.state?.from || '/browse';
     navigate(from, { replace: true });
   };
