@@ -44,12 +44,8 @@ export default function Auth() {
         role: data[0].role
       };
 
-      // Use the login function from useAuth
       login(userData);
       toast.success("Login successful");
-      
-      // Force a full page refresh and redirect
-      window.location.href = '/browse';
     } catch (error) {
       console.error('Error:', error);
       toast.error("Failed to login");
