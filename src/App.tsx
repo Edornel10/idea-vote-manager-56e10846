@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Browse from "./pages/Browse";
@@ -13,37 +13,34 @@ import NotFound from "./pages/NotFound";
 import UserManagement from "./pages/UserManagement";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth, NavigationCommand } from "./hooks/useAuth";
+import { useAuth } from "./hooks/useAuth";
 import { cn } from "./lib/utils";
+import { NavigationLink } from "./components/NavigationLink";
+import { MobileNav } from "./components/MobileNav";
 
 const queryClient = new QueryClient();
 
 const Navigation = () => {
-  const { user, logout, navigateTo } = useAuth(false);
+  const { user, logout } = useAuth(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
-  const navItems = [
-    { path: "browse", label: "Browse", requiredAuth: true },
-    { path: "create", label: "Create", requiredAuth: true },
-    { path: "vote", label: "Vote", requiredAuth: true },
-    { path: "users", label: "Users", requiredAuth: true, adminOnly: true },
-    { path: "auth", label: "Sign In", requiredAuth: false },
+  const navigationLinks = [
+    { path: "/browse", label: "Browse", requireAuth: true },
+    { path: "/create", label: "Create", requireAuth: true },
+    { path: "/vote", label: "Vote", requireAuth: true },
+    { path: "/users", label: "Users", requireAuth: true, requireAdmin: true },
+    { path: "/auth", label: "Sign In", requireAuth: false, hideWhenAuth: true },
   ];
-
-  const isCurrentPath = (path: string) => location.pathname === `/${path}`;
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
+          {/* Mobile menu button */}
           <button
-            onClick={toggleMobileMenu}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="inline-flex items-center justify-center p-2 rounded-md text-white md:hidden"
+            aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -52,80 +49,44 @@ const Navigation = () => {
             )}
           </button>
 
-          <div className="hidden md:flex md:space-x-8 md:items-center">
-            {navItems.map((item) => {
-              if (!user && item.requiredAuth) return null;
-              if (item.adminOnly && user?.role !== 'admin') return null;
-              if (user && item.path === 'auth') return null;
+          {/* Desktop navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            {navigationLinks.map((link) => {
+              if (link.requireAuth && !user) return null;
+              if (link.requireAdmin && user?.role !== "admin") return null;
+              if (link.hideWhenAuth && user) return null;
 
               return (
-                <button
-                  key={item.path}
-                  onClick={() => navigateTo(item.path as NavigationCommand)}
-                  className={cn(
-                    "text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium",
-                    "transition-colors duration-200",
-                    isCurrentPath(item.path) && "bg-primary/10"
-                  )}
-                >
-                  {item.label}
-                </button>
+                <NavigationLink
+                  key={link.path}
+                  to={link.path}
+                  label={link.label}
+                />
               );
             })}
-          </div>
-
-          {user && (
-            <button
-              onClick={logout}
-              className="hidden md:block text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Logout
-            </button>
-          )}
-
-          <div
-            className={cn(
-              "absolute top-16 left-0 right-0 bg-background border-b border-border md:hidden",
-              isMobileMenuOpen ? "block" : "hidden"
+            {user && (
+              <button
+                onClick={logout}
+                className={cn(
+                  "text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium",
+                  "transition-colors duration-200"
+                )}
+              >
+                Logout
+              </button>
             )}
-          >
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {navItems.map((item) => {
-                if (!user && item.requiredAuth) return null;
-                if (item.adminOnly && user?.role !== 'admin') return null;
-                if (user && item.path === 'auth') return null;
-
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => {
-                      navigateTo(item.path as NavigationCommand);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={cn(
-                      "text-white hover:text-gray-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium",
-                      isCurrentPath(item.path) && "bg-primary/10"
-                    )}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-              {user && (
-                <button
-                  onClick={() => {
-                    logout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="text-white hover:text-gray-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium"
-                >
-                  Logout
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile navigation */}
+      <MobileNav
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        links={navigationLinks}
+        user={user}
+        onLogout={logout}
+      />
     </nav>
   );
 };
@@ -137,43 +98,45 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Navigation />
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Navigate to="/browse" replace />} />
-          <Route
-            path="/browse"
-            element={
-              <ProtectedRoute>
-                <Browse />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/create"
-            element={
-              <ProtectedRoute>
-                <Create />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/vote"
-            element={
-              <ProtectedRoute>
-                <Vote />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <UserManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="pt-16"> {/* Add padding for fixed navbar */}
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Navigate to="/browse" replace />} />
+            <Route
+              path="/browse"
+              element={
+                <ProtectedRoute>
+                  <Browse />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create"
+              element={
+                <ProtectedRoute>
+                  <Create />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/vote"
+              element={
+                <ProtectedRoute>
+                  <Vote />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
