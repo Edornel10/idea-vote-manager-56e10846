@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Browse from "./pages/Browse";
 import Create from "./pages/Create";
 import Vote from "./pages/Vote";
@@ -12,75 +12,44 @@ import UserManagement from "./pages/UserManagement";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
+import { cn } from "./lib/utils";
 
 const queryClient = new QueryClient();
 
 const Navigation = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user, logout } = useAuth(true);  // Set to true to force authentication check
+  const { user } = useAuth(true);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/auth');
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path ? "bg-[#ea384c]/10" : "";
-  };
+  const navItems = [
+    { path: "/browse", label: "Browse", requiredAuth: true },
+    { path: "/create", label: "Create", requiredAuth: true },
+    { path: "/vote", label: "Vote", requiredAuth: true },
+    { path: "/users", label: "Users", requiredAuth: true, adminOnly: true },
+    { path: "/auth", label: "Sign In", requiredAuth: false },
+  ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex h-16 items-center justify-between">
           <div className="flex space-x-8 items-center">
-            {user ? (
-              <>
+            {navItems.map((item) => {
+              if (!user && item.requiredAuth) return null;
+              if (item.adminOnly && user?.role !== 'admin') return null;
+              if (user && item.path === '/auth') return null;
+
+              return (
                 <Link
-                  to="/browse"
-                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/browse")}`}
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium",
+                    "transition-colors duration-200"
+                  )}
                 >
-                  Browse
+                  {item.label}
                 </Link>
-                <Link
-                  to="/create"
-                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/create")}`}
-                >
-                  Create
-                </Link>
-                <Link
-                  to="/vote"
-                  className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/vote")}`}
-                >
-                  Vote
-                </Link>
-                {user.role === 'admin' && (
-                  <Link
-                    to="/users"
-                    className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/users")}`}
-                  >
-                    Users
-                  </Link>
-                )}
-              </>
-            ) : (
-              <Link
-                to="/auth"
-                className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${isActive("/auth")}`}
-              >
-                Sign In
-              </Link>
-            )}
-          </div>
-          <div className="flex items-center">
-            {user && (
-              <button
-                onClick={handleLogout}
-                className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Logout
-              </button>
-            )}
+              );
+            })}
           </div>
         </div>
       </div>
