@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
 import Browse from "./pages/Browse";
 import Create from "./pages/Create";
 import Vote from "./pages/Vote";
@@ -80,14 +80,7 @@ const App = () => (
         <Navigation />
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Browse />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<Navigate to="/browse" replace />} />
           <Route
             path="/browse"
             element={
@@ -128,3 +121,4 @@ const App = () => (
 );
 
 export default App;
+
