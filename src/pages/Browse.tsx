@@ -71,10 +71,11 @@ export default function Browse() {
 
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <motion.div 
+      <div className="max-w-4xl mx-auto pt-16">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
         >
           <h1 className="text-4xl font-bold text-white mb-2">Explore Ideas</h1>
           <p className="text-gray-400">Discover and filter through innovative ideas</p>

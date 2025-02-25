@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -67,7 +66,7 @@ export default function Create() {
 
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto pt-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -143,4 +142,3 @@ export default function Create() {
     </div>
   );
 }
-
