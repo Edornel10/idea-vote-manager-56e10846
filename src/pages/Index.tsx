@@ -37,7 +37,7 @@ export default function Index() {
 
       // Verify password using pgcrypto's crypt function
       const { data: verifyData, error: verifyError } = await supabase
-        .rpc('verify_password', {
+        .rpc<boolean>('verify_password', {
           input_password: password,
           stored_hash: userData.password
         });
