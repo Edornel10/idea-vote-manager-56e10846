@@ -9,11 +9,17 @@ import Create from "./pages/Create";
 import Vote from "./pages/Vote";
 import NotFound from "./pages/NotFound";
 import UserManagement from "./pages/UserManagement";
+import Auth from "./pages/Auth";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
 const Navigation = () => {
   const location = useLocation();
+  const { user } = useAuth(false);
+
+  if (!user) return null;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
@@ -44,14 +50,27 @@ const Navigation = () => {
             >
               Vote
             </Link>
-            <Link
-              to="/users"
-              className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
-                location.pathname === "/users" ? "bg-[#ea384c]/10" : ""
-              }`}
+            {user.role === 'admin' && (
+              <Link
+                to="/users"
+                className={`text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === "/users" ? "bg-[#ea384c]/10" : ""
+                }`}
+              >
+                Users
+              </Link>
+            )}
+          </div>
+          <div className="flex items-center">
+            <button
+              onClick={() => {
+                localStorage.removeItem('user');
+                window.location.href = '/auth';
+              }}
+              className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"
             >
-              Users
-            </Link>
+              Logout
+            </button>
           </div>
         </div>
       </div>
@@ -66,16 +85,50 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Navigation />
-        <div className="pt-16">
-          <Routes>
-            <Route path="/" element={<Browse />} />
-            <Route path="/browse" element={<Browse />} />
-            <Route path="/create" element={<Create />} />
-            <Route path="/vote" element={<Vote />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Browse />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/browse"
+            element={
+              <ProtectedRoute>
+                <Browse />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create"
+            element={
+              <ProtectedRoute>
+                <Create />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vote"
+            element={
+              <ProtectedRoute>
+                <Vote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
