@@ -8,38 +8,41 @@ interface User {
 }
 
 export function useAuth(requireAuth = true) {
-  const [user, setUser] = useState<User | null>(() => {
-    // Initialize user state immediately from localStorage
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
-        return JSON.parse(userStr);
+        setUser(JSON.parse(userStr));
       } catch (e) {
         console.error('Error parsing user data:', e);
         localStorage.removeItem('user');
       }
     }
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
-    if (requireAuth && !user) {
+    if (!isLoading && requireAuth && !user) {
       navigate('/auth');
     }
-  }, [user, requireAuth, navigate]);
+  }, [user, isLoading, requireAuth, navigate]);
 
   const login = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    navigate('/browse');
+    // Force a page reload to ensure all components get the updated state
+    window.location.href = '/browse';
   };
 
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    navigate('/auth');
+    // Force a page reload to ensure all components get the updated state
+    window.location.href = '/auth';
   };
 
   return { user, isLoading, login, logout };
