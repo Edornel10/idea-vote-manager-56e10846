@@ -41,15 +41,20 @@ export function useAuth(requireAuth = true) {
   }, [user, isLoading, requireAuth, navigate, location]);
 
   const login = async (userData: User) => {
-    // First update localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    // Then update state
-    setUser(userData);
-
-    // Finally navigate
-    const from = location.state?.from || '/browse';
-    navigate(from, { replace: true });
+    return new Promise<void>((resolve) => {
+      // Update localStorage first
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Update state and ensure it's set before navigating
+      setUser(userData);
+      
+      // Use a minimal timeout to ensure state is updated
+      setTimeout(() => {
+        const from = location.state?.from || '/browse';
+        navigate(from, { replace: true });
+        resolve();
+      }, 0);
+    });
   };
 
   const logout = () => {

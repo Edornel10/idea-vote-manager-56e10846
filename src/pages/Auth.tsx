@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,10 +15,8 @@ export default function Auth() {
   const { login, user } = useAuth(false);
   const navigate = useNavigate();
 
-  // Get the path to redirect to after login
   const from = location.state?.from || '/browse';
 
-  // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
       navigate(from);
@@ -28,7 +25,6 @@ export default function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsLoading(true);
 
     try {
@@ -49,7 +45,7 @@ export default function Auth() {
         role: data[0].role
       };
 
-      login(userData);
+      await login(userData);
       toast.success("Login successful");
     } catch (error) {
       console.error('Error:', error);
