@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,14 @@ export default function Vote() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Load voted ideas from sessionStorage on component mount
+  useEffect(() => {
+    const storedVotes = sessionStorage.getItem('votedIdeas');
+    if (storedVotes) {
+      setVotedIdeas(JSON.parse(storedVotes));
+    }
+  }, []);
 
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ['ideas'],
@@ -53,7 +61,11 @@ export default function Vote() {
 
       if (error) throw error;
       
-      setVotedIdeas(prev => [...prev, ideaId]);
+      // Update votedIdeas in state and sessionStorage
+      const newVotedIdeas = [...votedIdeas, ideaId];
+      setVotedIdeas(newVotedIdeas);
+      sessionStorage.setItem('votedIdeas', JSON.stringify(newVotedIdeas));
+      
       await queryClient.invalidateQueries({ queryKey: ['ideas'] });
       
       toast({

@@ -11,11 +11,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { categories } from "@/types/idea";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ['ideas'],
@@ -31,6 +33,11 @@ export default function Browse() {
   });
 
   const handleDelete = async (ideaId: string) => {
+    if (user?.role !== 'admin') {
+      toast.error("Only administrators can delete ideas");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('ideas')
@@ -130,14 +137,16 @@ export default function Browse() {
                       </span>
                       <p className="text-sm text-gray-400">votes</p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(idea.id)}
-                      className="text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
+                    {user?.role === 'admin' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(idea.id)}
+                        className="text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-300">{idea.description}</p>
