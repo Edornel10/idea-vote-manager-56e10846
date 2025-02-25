@@ -31,5 +31,16 @@ export function useAuth(requireAuth = true) {
     }
   }, [user, isLoading, requireAuth, navigate]);
 
-  return { user, isLoading };
+  // Add login and logout functions
+  const login = (userData: User) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  return { user, isLoading, login, logout };
 }

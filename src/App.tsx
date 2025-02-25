@@ -17,7 +17,7 @@ const queryClient = new QueryClient();
 
 const Navigation = () => {
   const location = useLocation();
-  const { user } = useAuth(false);
+  const { user, logout } = useAuth(false);
 
   if (!user) return null;
 
@@ -64,7 +64,7 @@ const Navigation = () => {
           <div className="flex items-center">
             <button
               onClick={() => {
-                localStorage.removeItem('user');
+                logout();
                 window.location.href = '/auth';
               }}
               className="text-white hover:text-gray-300 px-3 py-2 rounded-md text-sm font-medium"

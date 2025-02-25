@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Auth() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,12 +32,13 @@ export default function Auth() {
         return;
       }
 
-      // Store user info in localStorage
-      localStorage.setItem('user', JSON.stringify({
+      const userData = {
         id: data[0].id,
         role: data[0].role
-      }));
+      };
 
+      // Use the login function from useAuth
+      login(userData);
       toast.success("Login successful");
       navigate('/browse');
     } catch (error) {
