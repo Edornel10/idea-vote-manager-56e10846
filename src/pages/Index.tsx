@@ -8,6 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+interface UserData {
+  id: string;
+  username: string;
+  password: string;
+}
+
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: string;
+}
+
 export default function Index() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,73 +29,54 @@ export default function Index() {
     e.preventDefault();
     
     try {
-      // First check if user exists and get their hashed password
-      const { data: userData, error: userError } = await supabase
+      // Check if user exists
+      const { data: user, error: userError } = await supabase
         .from('auth_users')
-        .select('*')
+        .select<'auth_users', UserData>('*')
         .eq('username', username)
-        .maybeSingle();
+        .single();
 
       if (userError) {
-        console.error('User fetch error:', userError);
-        toast.error("An error occurred while fetching user data");
-        return;
-      }
-
-      if (!userData) {
         toast.error("Invalid username or password");
         return;
       }
 
-      // Call the verify_password function
-      const { data: verifyData, error: verifyError } = await supabase
-        .rpc('verify_password', {
+      // Verify password
+      const { data: isValid, error: verifyError } = await supabase
+        .rpc<boolean>('verify_password', {
           input_password: password,
-          stored_hash: userData.password
+          stored_hash: user.password
         });
 
-      if (verifyError) {
-        console.error('Password verification error:', verifyError);
-        toast.error("Error verifying password");
-        return;
-      }
-
-      if (!verifyData) {
+      if (verifyError || !isValid) {
         toast.error("Invalid username or password");
         return;
       }
 
-      // If password is correct, get user role
+      // Get user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('*')
-        .eq('user_id', userData.id)
-        .maybeSingle();
+        .select<'user_roles', UserRole>('*')
+        .eq('user_id', user.id)
+        .single();
 
       if (roleError) {
-        console.error('Role fetch error:', roleError);
-        toast.error("Error fetching user role");
+        toast.error("Error retrieving user role");
         return;
       }
 
-      if (!roleData) {
-        console.error('No role found for user');
-        toast.error("No role assigned to user");
-        return;
-      }
-      
-      // Set session data
+      // Store user session data
       localStorage.setItem('user', JSON.stringify({
-        id: userData.id,
-        username: userData.username,
+        id: user.id,
+        username: user.username,
         role: roleData.role
       }));
-      
+
       toast.success("Successfully logged in!");
       navigate("/browse");
-    } catch (error: any) {
-      console.error('Login error:', error);
+    } catch (error) {
       toast.error("An error occurred during login");
+      console.error("Login error:", error);
     }
   };
 
