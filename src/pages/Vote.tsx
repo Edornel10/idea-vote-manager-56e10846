@@ -28,11 +28,11 @@ export default function Vote() {
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ["ideas"],
     queryFn: async () => {
+      // The correct way to filter for frozen=false OR frozen=null
       const { data, error } = await supabase
         .from("ideas")
         .select("*")
-        .is('frozen', null)  // Get ideas where frozen is null
-        .or('frozen.eq.false')  // Or where frozen is explicitly false
+        .or('frozen.is.null,frozen.eq.false')  // This is the correct OR syntax in Supabase
         .order("votes", { ascending: false });
       
       if (error) throw error;
