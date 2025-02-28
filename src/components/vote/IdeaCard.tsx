@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import type { Idea } from "@/types/idea";
+import { formatDistance } from "date-fns";
 
 interface IdeaCardProps {
   idea: Idea;
@@ -19,6 +20,11 @@ export function IdeaCard({ idea, hasVoted = false, onVote, showVoteButton = true
   const toggleDescription = () => {
     setShowDescription(prev => !prev);
   };
+
+  // Format the creation date if available
+  const formattedDate = idea.created_at 
+    ? formatDistance(new Date(idea.created_at), new Date(), { addSuffix: true })
+    : null;
 
   return (
     <motion.div
@@ -77,6 +83,13 @@ export function IdeaCard({ idea, hasVoted = false, onVote, showVoteButton = true
             <ThumbsUp className="w-4 h-4 mr-2" />
             {hasVoted ? "Already Voted" : "Vote"}
           </Button>
+        )}
+
+        {/* Add creation date at the bottom */}
+        {formattedDate && (
+          <div className="mt-3 text-xs text-gray-500">
+            Created {formattedDate}
+          </div>
         )}
       </Card>
     </motion.div>

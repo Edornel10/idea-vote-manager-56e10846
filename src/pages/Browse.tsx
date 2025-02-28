@@ -2,10 +2,10 @@
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, Search, Plus, Trash2 } from "lucide-react";
+import { Filter, Search, Plus, Trash2, SnowflakeIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -52,6 +52,35 @@ export default function Browse() {
       console.error('Error deleting idea:', error);
       toast.error("Failed to delete idea");
     }
+  };
+
+  // New mutation for toggling the frozen status
+  const toggleFreezeMutation = useMutation({
+    mutationFn: async ({ ideaId, frozen }: { ideaId: string; frozen: boolean }) => {
+      const { error } = await supabase
+        .from('ideas')
+        .update({ frozen })
+        .eq('id', ideaId);
+      
+      if (error) throw error;
+      return { ideaId, frozen };
+    },
+    onSuccess: ({ frozen }) => {
+      queryClient.invalidateQueries({ queryKey: ['ideas'] });
+      toast.success(`Idea ${frozen ? 'frozen' : 'unfrozen'} successfully`);
+    },
+    onError: () => {
+      toast.error("Failed to update idea status");
+    }
+  });
+
+  const handleToggleFreeze = (ideaId: string, currentStatus: boolean) => {
+    if (user?.role !== 'admin') {
+      toast.error("Only administrators can freeze/unfreeze ideas");
+      return;
+    }
+
+    toggleFreezeMutation.mutate({ ideaId, frozen: !currentStatus });
   };
 
   const filteredIdeas = ideas.filter((idea) => {
@@ -130,19 +159,32 @@ export default function Browse() {
                   category: idea.category,
                   description: idea.description,
                   summary: idea.summary || "",
-                  votes: idea.votes || 0
+                  votes: idea.votes || 0,
+                  created_at: idea.created_at,
+                  frozen: idea.frozen
                 }}
                 showVoteButton={false}
               />
               {user?.role === 'admin' && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(idea.id)}
-                  className="absolute top-4 right-20 text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <div className="absolute top-4 right-4 flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleToggleFreeze(idea.id, !!idea.frozen)}
+                    className={`text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 ${idea.frozen ? 'bg-blue-400/20 text-blue-400' : ''}`}
+                    title={idea.frozen ? "Unfreeze idea" : "Freeze idea"}
+                  >
+                    <SnowflakeIcon className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(idea.id)}
+                    className="text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </div>
               )}
             </motion.div>
           ))}

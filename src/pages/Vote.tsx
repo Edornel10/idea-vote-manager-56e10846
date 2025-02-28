@@ -31,6 +31,8 @@ export default function Vote() {
       const { data, error } = await supabase
         .from("ideas")
         .select("*")
+        .filter('frozen', 'is', null)  // Only get non-frozen ideas
+        .or('frozen.eq.false')         // Or explicitly set to false
         .order("votes", { ascending: false });
       
       if (error) throw error;
@@ -42,7 +44,9 @@ export default function Vote() {
         category: idea.category,
         description: idea.description,
         summary: idea.summary || "",
-        votes: idea.votes || 0
+        votes: idea.votes || 0,
+        created_at: idea.created_at,
+        frozen: idea.frozen
       }));
     },
   });
