@@ -139,7 +139,7 @@ export default function Browse() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDelete(idea.id)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
+                  className="absolute top-4 right-20 text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>

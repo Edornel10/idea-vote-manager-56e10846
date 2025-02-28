@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Idea } from "@/types/idea";
 
 export default function Vote() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [votedIdeas, setVotedIdeas] = useState<string[]>(() => {
     const savedVotes = localStorage.getItem("votedIdeas");
@@ -85,9 +85,9 @@ export default function Vote() {
 
   // Filter ideas based on search query and category
   const filteredIdeas = ideas.filter((idea) => {
-    const matchesSearch = idea.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         idea.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (idea.summary && idea.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) || 
+                         idea.description.toLowerCase().includes(search.toLowerCase()) ||
+                         (idea.summary && idea.summary.toLowerCase().includes(search.toLowerCase()));
     
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
     
@@ -115,10 +115,10 @@ export default function Vote() {
         </p>
 
         <SearchControls 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          search={search}
+          onSearchChange={setSearch}
           selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
+          onCategoryChange={setSelectedCategory}
         />
 
         <div className="grid gap-6 mt-8">
