@@ -14,6 +14,7 @@ export type Database = {
           category: string
           created_at: string | null
           description: string
+          frozen: boolean | null
           id: string
           summary: string | null
           title: string
@@ -23,6 +24,7 @@ export type Database = {
           category: string
           created_at?: string | null
           description: string
+          frozen?: boolean | null
           id?: string
           summary?: string | null
           title: string
@@ -32,6 +34,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           description?: string
+          frozen?: boolean | null
           id?: string
           summary?: string | null
           title?: string

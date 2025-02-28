@@ -31,11 +31,13 @@ export default function Vote() {
       const { data, error } = await supabase
         .from("ideas")
         .select("*")
-        .filter('frozen', 'is', null)  // Only get non-frozen ideas
-        .or('frozen.eq.false')         // Or explicitly set to false
+        .is('frozen', null)  // Get ideas where frozen is null
+        .or('frozen.eq.false')  // Or where frozen is explicitly false
         .order("votes", { ascending: false });
       
       if (error) throw error;
+      
+      console.log("Fetched ideas:", data);
       
       // Map the data to match the Idea type with summary property
       return data.map((idea): Idea => ({
