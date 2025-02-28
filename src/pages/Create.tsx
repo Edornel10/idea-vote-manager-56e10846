@@ -12,8 +12,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Download, Upload } from "lucide-react";
+import { categories } from "@/types/idea";
 
-const categories = ["Education", "Environment", "Community", "Technology", "Health"];
+// Remove "All" from categories since it's not a valid category for ideas
+const validCategories = categories.filter(cat => cat !== "All");
 
 export default function Create() {
   const [title, setTitle] = useState("");
@@ -93,15 +95,25 @@ export default function Create() {
         const dataRows = rows.slice(1).filter(row => row.trim() !== '');
         
         const ideas = dataRows.map(row => {
-          const [title, category, description] = row.split(',').map(cell => 
-            // Remove quotes if they exist
-            cell.replace(/^"|"$/g, '').trim()
+          // Handle quoted CSV values properly
+          const processedRow = row.replace(/(?:^|,)("(?:[^"]*(?:""[^"]*)*)"|[^,]*)/g, 
+            (match, p1) => {
+              if (p1.startsWith('"') && p1.endsWith('"')) {
+                // Replace double quotes with single quotes in the content
+                return p1.slice(1, -1).replace(/""/g, '"');
+              }
+              return p1;
+            }
           );
           
+          const columns = processedRow.split(',');
+          
+          // The export format includes id, title, category, description, votes, created_at
+          // We're only interested in title (index 1), category (index 2), and description (index 3)
           return {
-            title,
-            category,
-            description,
+            title: columns[1]?.trim() || '',
+            category: columns[2]?.trim() || '',
+            description: columns[3]?.trim() || '',
             votes: 0
           };
         });
@@ -109,11 +121,11 @@ export default function Create() {
         // Filter out invalid entries
         const validIdeas = ideas.filter(idea => 
           idea.title && idea.category && idea.description &&
-          categories.includes(idea.category)
+          validCategories.includes(idea.category)
         );
 
         if (validIdeas.length === 0) {
-          throw new Error("No valid ideas found in CSV");
+          throw new Error("No valid ideas found in CSV. Make sure the format matches the export format.");
         }
 
         // Insert ideas into database
@@ -246,7 +258,7 @@ export default function Create() {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
+                    {validCategories.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
                       </SelectItem>
