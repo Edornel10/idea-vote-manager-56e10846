@@ -165,8 +165,10 @@ export default function Browse() {
                 }}
                 showVoteButton={false}
               />
+              
+              {/* Moved admin buttons below the vote count */}
               {user?.role === 'admin' && (
-                <div className="absolute top-4 right-4 flex space-x-2">
+                <div className="absolute top-20 right-4 flex space-x-2">
                   <Button
                     variant="ghost"
                     size="icon"
