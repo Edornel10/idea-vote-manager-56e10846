@@ -43,7 +43,7 @@ export function IdeaCard({ idea, hasVoted = false, onVote, showVoteButton = true
           <p className="text-gray-300">
             {idea.summary || idea.description.substring(0, 150) + (idea.description.length > 150 ? '...' : '')}
           </p>
-          {idea.description.length > 150 && (
+          {idea.description && idea.description.length > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
