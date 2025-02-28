@@ -91,38 +91,71 @@ export default function Create() {
         const text = e.target?.result as string;
         const rows = text.split('\n');
         
-        // Skip header row
+        // Skip header row and filter out empty rows
         const dataRows = rows.slice(1).filter(row => row.trim() !== '');
         
-        const ideas = dataRows.map(row => {
-          // Handle quoted CSV values properly
-          const processedRow = row.replace(/(?:^|,)("(?:[^"]*(?:""[^"]*)*)"|[^,]*)/g, 
-            (match, p1) => {
-              if (p1.startsWith('"') && p1.endsWith('"')) {
-                // Replace double quotes with single quotes in the content
-                return p1.slice(1, -1).replace(/""/g, '"');
+        if (dataRows.length === 0) {
+          throw new Error("No data found in CSV file");
+        }
+        
+        console.log("CSV Data Rows:", dataRows);
+        
+        // Parse CSV rows into ideas objects
+        const ideas = [];
+        for (const row of dataRows) {
+          // CSV parsing logic that properly handles quoted values
+          const columns = [];
+          let inQuotes = false;
+          let currentValue = '';
+          
+          for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            
+            if (char === '"') {
+              if (inQuotes && i + 1 < row.length && row[i + 1] === '"') {
+                // Handle escaped quotes (two double quotes in a quoted field)
+                currentValue += '"';
+                i++; // Skip the next quote
+              } else {
+                // Toggle quote state
+                inQuotes = !inQuotes;
               }
-              return p1;
+            } else if (char === ',' && !inQuotes) {
+              // End of field
+              columns.push(currentValue.trim());
+              currentValue = '';
+            } else {
+              currentValue += char;
             }
-          );
+          }
           
-          const columns = processedRow.split(',');
+          // Add the last column
+          columns.push(currentValue.trim());
           
-          // The export format includes id, title, category, description, votes, created_at
-          // We're only interested in title (index 1), category (index 2), and description (index 3)
-          return {
-            title: columns[1]?.trim() || '',
-            category: columns[2]?.trim() || '',
-            description: columns[3]?.trim() || '',
-            votes: 0
-          };
-        });
+          console.log("Parsed columns:", columns);
+          
+          // The export format includes id (0), title (1), category (2), description (3), votes (4), created_at (5)
+          // For import, we only need title, category, description
+          if (columns.length >= 4) {
+            ideas.push({
+              title: columns[1] || '',
+              category: columns[2] || '',
+              description: columns[3] || '',
+              votes: 0
+            });
+          }
+        }
+        
+        console.log("Parsed ideas before validation:", ideas);
 
         // Filter out invalid entries
-        const validIdeas = ideas.filter(idea => 
-          idea.title && idea.category && idea.description &&
-          validCategories.includes(idea.category)
-        );
+        const validIdeas = ideas.filter(idea => {
+          const isValid = idea.title && idea.category && idea.description && 
+                          validCategories.includes(idea.category);
+          return isValid;
+        });
+        
+        console.log("Valid ideas after filtering:", validIdeas);
 
         if (validIdeas.length === 0) {
           throw new Error("No valid ideas found in CSV. Make sure the format matches the export format.");
@@ -133,7 +166,10 @@ export default function Create() {
           .from('ideas')
           .insert(validIdeas);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
 
         await queryClient.invalidateQueries({ queryKey: ['ideas'] });
         
