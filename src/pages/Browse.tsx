@@ -1,6 +1,5 @@
 
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Search, Plus, Trash2 } from "lucide-react";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { categories } from "@/types/idea";
 import { useAuth } from "@/hooks/useAuth";
+import { IdeaCard } from "@/components/vote/IdeaCard";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
@@ -121,40 +121,29 @@ export default function Browse() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              className="relative"
             >
-              <Card className="bg-[#333333] p-6 border-0">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-1">
-                      {idea.title}
-                    </h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ea384c]/20 text-[#ea384c]">
-                      {idea.category}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-white">
-                        {idea.votes}
-                      </span>
-                      <p className="text-sm text-gray-400">votes</p>
-                    </div>
-                    {user?.role === 'admin' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(idea.id)}
-                        className="text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <p className="text-gray-300">
-                  {idea.summary || idea.description.substring(0, 150) + (idea.description.length > 150 ? '...' : '')}
-                </p>
-              </Card>
+              <IdeaCard 
+                idea={{
+                  id: idea.id,
+                  title: idea.title,
+                  category: idea.category,
+                  description: idea.description,
+                  summary: idea.summary || "",
+                  votes: idea.votes || 0
+                }}
+                showVoteButton={false}
+              />
+              {user?.role === 'admin' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(idea.id)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-[#ea384c] hover:bg-[#ea384c]/10"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              )}
             </motion.div>
           ))}
         </motion.div>

@@ -2,16 +2,24 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import type { Idea } from "@/types/idea";
 
 interface IdeaCardProps {
   idea: Idea;
-  hasVoted: boolean;
-  onVote: (ideaId: string) => void;
+  hasVoted?: boolean;
+  onVote?: (ideaId: string) => void;
+  showVoteButton?: boolean;
 }
 
-export function IdeaCard({ idea, hasVoted, onVote }: IdeaCardProps) {
+export function IdeaCard({ idea, hasVoted = false, onVote, showVoteButton = true }: IdeaCardProps) {
+  const [showDescription, setShowDescription] = useState(false);
+
+  const toggleDescription = () => {
+    setShowDescription(prev => !prev);
+  };
+
   return (
     <motion.div
       layout
@@ -31,17 +39,45 @@ export function IdeaCard({ idea, hasVoted, onVote }: IdeaCardProps) {
             <p className="text-sm text-gray-400">votes</p>
           </div>
         </div>
-        <p className="text-gray-300 mb-4">
-          {idea.summary || idea.description.substring(0, 150) + (idea.description.length > 150 ? '...' : '')}
-        </p>
-        <Button
-          className={`w-full ${hasVoted ? 'bg-gray-600' : 'bg-[#ea384c] hover:bg-[#ea384c]/90'}`}
-          disabled={hasVoted}
-          onClick={() => onVote(idea.id)}
-        >
-          <ThumbsUp className="w-4 h-4 mr-2" />
-          {hasVoted ? "Already Voted" : "Vote"}
-        </Button>
+        <div className="mb-4">
+          <p className="text-gray-300">
+            {idea.summary || idea.description.substring(0, 150) + (idea.description.length > 150 ? '...' : '')}
+          </p>
+          {idea.description.length > 150 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="mt-2 text-gray-400 hover:text-white p-0 h-auto"
+              onClick={toggleDescription}
+            >
+              {showDescription ? (
+                <><ChevronUp className="w-4 h-4 mr-1" /> Show less</>
+              ) : (
+                <><ChevronDown className="w-4 h-4 mr-1" /> Show more</>
+              )}
+            </Button>
+          )}
+          {showDescription && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 text-gray-300 bg-[#2a2a2a] p-3 rounded-md"
+            >
+              {idea.description}
+            </motion.div>
+          )}
+        </div>
+        {showVoteButton && (
+          <Button
+            className={`w-full ${hasVoted ? 'bg-gray-600' : 'bg-[#ea384c] hover:bg-[#ea384c]/90'}`}
+            disabled={hasVoted}
+            onClick={() => onVote && onVote(idea.id)}
+          >
+            <ThumbsUp className="w-4 h-4 mr-2" />
+            {hasVoted ? "Already Voted" : "Vote"}
+          </Button>
+        )}
       </Card>
     </motion.div>
   );

@@ -1,85 +1,101 @@
 
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SearchControls } from "@/components/vote/SearchControls";
 import { IdeaCard } from "@/components/vote/IdeaCard";
-import type { Idea } from "@/types/idea";
+import { SearchControls } from "@/components/vote/SearchControls";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { Idea } from "@/types/idea";
 
 export default function Vote() {
-  const [votedIdeas, setVotedIdeas] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const { toast } = useToast();
+  const [votedIdeas, setVotedIdeas] = useState<string[]>(() => {
+    const savedVotes = localStorage.getItem("votedIdeas");
+    return savedVotes ? JSON.parse(savedVotes) : [];
+  });
+  
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Load voted ideas from sessionStorage on component mount
+  // Store voted ideas in localStorage
   useEffect(() => {
-    const storedVotes = sessionStorage.getItem('votedIdeas');
-    if (storedVotes) {
-      setVotedIdeas(JSON.parse(storedVotes));
-    }
-  }, []);
+    localStorage.setItem("votedIdeas", JSON.stringify(votedIdeas));
+  }, [votedIdeas]);
 
+  // Query to fetch ideas
   const { data: ideas = [], isLoading } = useQuery({
-    queryKey: ['ideas'],
+    queryKey: ["ideas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ideas')
-        .select('*')
-        .order('votes', { ascending: false });
+        .from("ideas")
+        .select("*")
+        .order("votes", { ascending: false });
       
       if (error) throw error;
-      return data as Idea[];
-    }
+      
+      // Map the data to match the Idea type with summary property
+      return data.map((idea): Idea => ({
+        id: idea.id,
+        title: idea.title,
+        category: idea.category,
+        description: idea.description,
+        summary: idea.summary || "",
+        votes: idea.votes || 0
+      }));
+    },
   });
 
+  // Mutation to update idea votes
+  const voteMutation = useMutation({
+    mutationFn: async (ideaId: string) => {
+      // If user is not logged in, don't allow voting
+      if (!user) {
+        throw new Error("You must be logged in to vote");
+      }
+
+      // If already voted for this idea, don't allow voting again
+      if (votedIdeas.includes(ideaId)) {
+        throw new Error("You've already voted for this idea");
+      }
+
+      const { error } = await supabase
+        .from("ideas")
+        .update({ votes: ideas.find(i => i.id === ideaId)!.votes + 1 })
+        .eq("id", ideaId);
+      
+      if (error) throw error;
+      
+      return ideaId;
+    },
+    onSuccess: (ideaId) => {
+      // Add to voted ideas list
+      setVotedIdeas((prev) => [...prev, ideaId]);
+      
+      // Invalidate the ideas query to refetch
+      queryClient.invalidateQueries({ queryKey: ["ideas"] });
+      
+      toast.success("Your vote has been counted!");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to vote");
+    },
+  });
+
+  // Filter ideas based on search query and category
   const filteredIdeas = ideas.filter((idea) => {
-    const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
-                         idea.description.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = idea.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         idea.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (idea.summary && idea.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+    
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
+    
     return matchesSearch && matchesCategory;
   });
 
-  const handleVote = async (ideaId: string) => {
-    if (votedIdeas.includes(ideaId)) {
-      toast({
-        title: "Error",
-        description: "You've already voted for this idea",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('ideas')
-        .update({ votes: (ideas.find(i => i.id === ideaId)?.votes || 0) + 1 })
-        .eq('id', ideaId);
-
-      if (error) throw error;
-      
-      // Update votedIdeas in state and sessionStorage
-      const newVotedIdeas = [...votedIdeas, ideaId];
-      setVotedIdeas(newVotedIdeas);
-      sessionStorage.setItem('votedIdeas', JSON.stringify(newVotedIdeas));
-      
-      await queryClient.invalidateQueries({ queryKey: ['ideas'] });
-      
-      toast({
-        title: "Success!",
-        description: "Your vote has been recorded",
-      });
-    } catch (error) {
-      console.error('Error voting:', error);
-      toast({
-        title: "Error",
-        description: "Failed to record your vote",
-        variant: "destructive",
-      });
-    }
+  const handleVote = (ideaId: string) => {
+    voteMutation.mutate(ideaId);
   };
 
   if (isLoading) {
@@ -93,37 +109,35 @@ export default function Vote() {
   return (
     <div className="min-h-screen bg-[#222222] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto pt-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold text-white mb-2">Vote for Ideas</h1>
-          <p className="text-gray-400">Support the ideas you believe in</p>
-        </motion.div>
+        <h1 className="text-4xl font-bold text-white text-center mb-2">Vote on Ideas</h1>
+        <p className="text-gray-400 text-center mb-8">
+          Support the ideas you believe in by casting your vote
+        </p>
 
-        <SearchControls
-          search={search}
+        <SearchControls 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
           selectedCategory={selectedCategory}
-          onSearchChange={setSearch}
-          onCategoryChange={setSelectedCategory}
+          setSelectedCategory={setSelectedCategory}
         />
 
-        <motion.div 
-          className="grid gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
+        <div className="grid gap-6 mt-8">
           {filteredIdeas.map((idea) => (
             <IdeaCard
               key={idea.id}
               idea={idea}
               hasVoted={votedIdeas.includes(idea.id)}
               onVote={handleVote}
+              showVoteButton={true}
             />
           ))}
-        </motion.div>
+          
+          {filteredIdeas.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No ideas found matching your criteria.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
