@@ -36,7 +36,7 @@ export default function Create() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !category || !description) {
+    if (!title || !category || !summary) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -161,7 +161,7 @@ export default function Create() {
 
         // Filter out invalid entries
         const validIdeas = ideas.filter(idea => {
-          const isValid = idea.title && idea.category && idea.description && 
+          const isValid = idea.title && idea.category && idea.summary && 
                           validCategories.includes(idea.category);
           return isValid;
         });
@@ -317,29 +317,29 @@ export default function Create() {
               
               <div>
                 <label htmlFor="summary" className="block text-sm font-medium text-white mb-1">
-                  Summary
+                  Summary <span className="text-[#ea384c]">*</span>
                 </label>
                 <Input
                   id="summary"
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
-                  placeholder="Enter a brief summary of your idea (optional)"
+                  placeholder="Enter a brief summary of your idea"
                   className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
+                  required
                 />
               </div>
 
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-white mb-1">
-                  Description <span className="text-[#ea384c]">*</span>
+                  Description
                 </label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe your idea in detail"
+                  placeholder="Describe your idea in detail (optional)"
                   rows={4}
                   className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
-                  required
                 />
               </div>
 

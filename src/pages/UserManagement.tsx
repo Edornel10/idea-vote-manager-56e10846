@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { Download, Upload } from "lucide-react";
 
 interface User {
   id: string;
@@ -19,6 +20,9 @@ export default function UserManagement() {
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<'admin' | 'standard'>('standard');
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: users = [], refetch } = useQuery({
     queryKey: ['users'],
@@ -82,6 +86,179 @@ export default function UserManagement() {
     } catch (error) {
       console.error('Error deleting user:', error);
       toast.error("Failed to delete user");
+    }
+  };
+
+  const handleFileSelection = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const text = e.target?.result as string;
+        const rows = text.split('\n');
+        
+        // Skip header row and filter out empty rows
+        const dataRows = rows.slice(1).filter(row => row.trim() !== '');
+        
+        if (dataRows.length === 0) {
+          throw new Error("No data found in CSV file");
+        }
+        
+        console.log("CSV Data Rows:", dataRows);
+        
+        // Parse CSV rows into user objects
+        const usersToImport = [];
+        for (const row of dataRows) {
+          // CSV parsing logic that properly handles quoted values
+          const columns = [];
+          let inQuotes = false;
+          let currentValue = '';
+          
+          for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            
+            if (char === '"') {
+              if (inQuotes && i + 1 < row.length && row[i + 1] === '"') {
+                // Handle escaped quotes (two double quotes in a quoted field)
+                currentValue += '"';
+                i++; // Skip the next quote
+              } else {
+                // Toggle quote state
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              // End of field
+              columns.push(currentValue.trim());
+              currentValue = '';
+            } else {
+              currentValue += char;
+            }
+          }
+          
+          // Add the last column
+          columns.push(currentValue.trim());
+          
+          console.log("Parsed columns:", columns);
+          
+          // The export format includes id, username, role
+          // For import, we need username, password_hash, role
+          // Since we can't import password hashes directly, we set a default password
+          // that admins would need to reset later
+          if (columns.length >= 3) {
+            const username = columns[1];
+            const role = columns[2];
+            
+            // Only accept valid roles
+            if (role !== 'admin' && role !== 'standard') {
+              console.warn(`Skipping user with invalid role: ${role}`);
+              continue;
+            }
+            
+            // Generate a password hash for the default password
+            const { data: passwordHash } = await supabase.rpc('hash_password', {
+              password: 'ChangeMe123!'
+            });
+            
+            usersToImport.push({
+              username,
+              password_hash: passwordHash,
+              role
+            });
+          }
+        }
+        
+        console.log("Users to import:", usersToImport);
+
+        // Filter out invalid entries
+        const validUsers = usersToImport.filter(user => {
+          return user.username && user.password_hash && (user.role === 'admin' || user.role === 'standard');
+        });
+        
+        if (validUsers.length === 0) {
+          throw new Error("No valid users found in CSV. Make sure the format matches the export format.");
+        }
+
+        // Insert users into database
+        for (const user of validUsers) {
+          const { error } = await supabase
+            .from('users')
+            .insert([user]);
+
+          if (error) {
+            console.error("Error importing user:", user.username, error);
+            // Continue with other users if one fails
+          }
+        }
+
+        await refetch();
+        
+        toast.success(`${validUsers.length} users have been imported with default password 'ChangeMe123!'`);
+        
+        // Reset file input
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      };
+      
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('Error importing users:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to import users");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, username, role');
+
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        toast.error("There are no users to export");
+        return;
+      }
+
+      // Create CSV content
+      const headers = ['id', 'username', 'role'];
+      const csvContent = [
+        headers.join(','),
+        ...data.map(user => 
+          headers.map(header => {
+            // Properly quote and escape values
+            const value = String(user[header as keyof typeof user] || '');
+            return `"${value.replace(/"/g, '""')}"`;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `users_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`${data.length} users have been exported`);
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      toast.error("Failed to export users");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -150,6 +327,44 @@ export default function UserManagement() {
                 Add User
               </Button>
             </form>
+          </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <Card className="bg-[#333333] p-6 border-0">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".csv"
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+              <Button 
+                type="button"
+                variant="outline"
+                className="flex-1 bg-[#444444] text-white border-[#555555] hover:bg-[#555555]"
+                onClick={handleFileSelection}
+                disabled={isImporting}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {isImporting ? "Importing..." : "Import Users"}
+              </Button>
+              <Button 
+                type="button"
+                variant="outline"
+                className="flex-1 bg-[#444444] text-white border-[#555555] hover:bg-[#555555]"
+                onClick={handleExportCSV}
+                disabled={isExporting}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isExporting ? "Exporting..." : "Export Users"}
+              </Button>
+            </div>
           </Card>
         </motion.div>
 
