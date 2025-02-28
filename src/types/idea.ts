@@ -4,6 +4,7 @@ export interface Idea {
   title: string;
   category: string;
   description: string;
+  summary: string;
   votes: number;
 }
 

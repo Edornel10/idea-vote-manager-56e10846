@@ -31,7 +31,9 @@ export function IdeaCard({ idea, hasVoted, onVote }: IdeaCardProps) {
             <p className="text-sm text-gray-400">votes</p>
           </div>
         </div>
-        <p className="text-gray-300 mb-4">{idea.description}</p>
+        <p className="text-gray-300 mb-4">
+          {idea.summary || idea.description.substring(0, 150) + (idea.description.length > 150 ? '...' : '')}
+        </p>
         <Button
           className={`w-full ${hasVoted ? 'bg-gray-600' : 'bg-[#ea384c] hover:bg-[#ea384c]/90'}`}
           disabled={hasVoted}

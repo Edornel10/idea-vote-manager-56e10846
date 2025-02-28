@@ -56,7 +56,8 @@ export default function Browse() {
 
   const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
-                         idea.description.toLowerCase().includes(search.toLowerCase());
+                         idea.description.toLowerCase().includes(search.toLowerCase()) ||
+                         (idea.summary && idea.summary.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -150,7 +151,9 @@ export default function Browse() {
                     )}
                   </div>
                 </div>
-                <p className="text-gray-300">{idea.description}</p>
+                <p className="text-gray-300">
+                  {idea.summary || idea.description.substring(0, 150) + (idea.description.length > 150 ? '...' : '')}
+                </p>
               </Card>
             </motion.div>
           ))}

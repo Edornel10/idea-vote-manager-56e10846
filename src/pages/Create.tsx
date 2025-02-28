@@ -20,6 +20,7 @@ const validCategories = categories.filter(cat => cat !== "All");
 export default function Create() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
+  const [summary, setSummary] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -38,7 +39,7 @@ export default function Create() {
     if (!title || !category || !description) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -50,7 +51,7 @@ export default function Create() {
       const { error } = await supabase
         .from('ideas')
         .insert([
-          { title, category, description, votes: 0 }
+          { title, category, summary, description, votes: 0 }
         ]);
 
       if (error) throw error;
@@ -134,12 +135,22 @@ export default function Create() {
           
           console.log("Parsed columns:", columns);
           
-          // The export format includes id (0), title (1), category (2), description (3), votes (4), created_at (5)
-          // For import, we only need title, category, description
-          if (columns.length >= 4) {
+          // The export format includes id (0), title (1), category (2), summary (3), description (4), votes (5), created_at (6)
+          // For import, we only need title, category, summary, description
+          if (columns.length >= 5) {
             ideas.push({
               title: columns[1] || '',
               category: columns[2] || '',
+              summary: columns[3] || '',
+              description: columns[4] || '',
+              votes: 0
+            });
+          } else if (columns.length >= 4) {
+            // Handle older format without summary
+            ideas.push({
+              title: columns[1] || '',
+              category: columns[2] || '',
+              summary: '',
               description: columns[3] || '',
               votes: 0
             });
@@ -215,7 +226,7 @@ export default function Create() {
       }
 
       // Create CSV content
-      const headers = ['id', 'title', 'category', 'description', 'votes', 'created_at'];
+      const headers = ['id', 'title', 'category', 'summary', 'description', 'votes', 'created_at'];
       const csvContent = [
         headers.join(','),
         ...data.map(idea => 
@@ -274,7 +285,7 @@ export default function Create() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-white mb-1">
-                  Title
+                  Title <span className="text-[#ea384c]">*</span>
                 </label>
                 <Input
                   id="title"
@@ -282,14 +293,15 @@ export default function Create() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter the title of your idea"
                   className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
+                  required
                 />
               </div>
 
               <div>
                 <label htmlFor="category" className="block text-sm font-medium text-white mb-1">
-                  Category
+                  Category <span className="text-[#ea384c]">*</span>
                 </label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select value={category} onValueChange={setCategory} required>
                   <SelectTrigger className="bg-[#444444] border-0 text-white">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -302,10 +314,23 @@ export default function Create() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              <div>
+                <label htmlFor="summary" className="block text-sm font-medium text-white mb-1">
+                  Summary
+                </label>
+                <Input
+                  id="summary"
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  placeholder="Enter a brief summary of your idea (optional)"
+                  className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
+                />
+              </div>
 
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-white mb-1">
-                  Description
+                  Description <span className="text-[#ea384c]">*</span>
                 </label>
                 <Textarea
                   id="description"
@@ -314,6 +339,7 @@ export default function Create() {
                   placeholder="Describe your idea in detail"
                   rows={4}
                   className="bg-[#444444] border-0 text-white placeholder:text-gray-400"
+                  required
                 />
               </div>
 
