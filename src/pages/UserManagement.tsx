@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -28,7 +29,7 @@ export default function UserManagement() {
     queryFn: async () => {
       try {
         const data = await getUsers();
-        return data as User[];
+        return Array.isArray(data) ? data as User[] : [];
       } catch (error) {
         console.error('Error fetching users:', error);
         throw error;
@@ -192,8 +193,9 @@ export default function UserManagement() {
 
     try {
       const data = await getUsers();
+      const usersArray = Array.isArray(data) ? data : [];
       
-      if (!data || data.length === 0) {
+      if (!usersArray || usersArray.length === 0) {
         toast.error("There are no users to export");
         return;
       }
@@ -202,7 +204,7 @@ export default function UserManagement() {
       const headers = ['id', 'username', 'role'];
       const csvContent = [
         headers.join(','),
-        ...data.map((user: any) => 
+        ...usersArray.map((user: any) => 
           headers.map(header => {
             // Properly quote and escape values
             const value = String(user[header] || '');
@@ -221,7 +223,7 @@ export default function UserManagement() {
       link.click();
       document.body.removeChild(link);
 
-      toast.success(`${data.length} users have been exported`);
+      toast.success(`${usersArray.length} users have been exported`);
     } catch (error) {
       console.error('Error exporting users:', error);
       toast.error("Failed to export users");

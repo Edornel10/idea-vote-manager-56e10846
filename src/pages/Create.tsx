@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -204,8 +205,9 @@ export default function Create() {
 
     try {
       const data = await getIdeas(true);
+      const ideasArray = Array.isArray(data) ? data : [];
       
-      if (!data || data.length === 0) {
+      if (!ideasArray || ideasArray.length === 0) {
         toast({
           title: "No Data",
           description: "There are no ideas to export",
@@ -217,7 +219,7 @@ export default function Create() {
       const headers = ['id', 'title', 'category', 'summary', 'description', 'votes', 'created_at'];
       const csvContent = [
         headers.join(','),
-        ...data.map((idea: any) => 
+        ...ideasArray.map((idea: any) => 
           headers.map(header => {
             // Properly quote and escape values
             const value = String(idea[header] || '');
@@ -238,7 +240,7 @@ export default function Create() {
 
       toast({
         title: "Export Successful",
-        description: `${data.length} ideas have been exported`,
+        description: `${ideasArray.length} ideas have been exported`,
       });
     } catch (error) {
       console.error('Error exporting ideas:', error);

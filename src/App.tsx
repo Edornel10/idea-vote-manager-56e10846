@@ -21,7 +21,7 @@ import { MobileNav } from "./components/MobileNav";
 const queryClient = new QueryClient();
 
 const Navigation = () => {
-  const { user, logout } = useAuth(false);
+  const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationLinks = [

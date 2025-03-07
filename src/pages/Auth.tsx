@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
-  const { login, user } = useAuth(false);
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   const from = location.state?.from || '/browse';
@@ -29,25 +28,13 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.rpc('verify_password', {
-        username,
-        password,
-      });
-
-      if (error) throw error;
+      const success = await login({username, password});
       
-      if (!data || data.length === 0) {
+      if (success) {
+        toast.success("Login successful");
+      } else {
         toast.error("Invalid username or password");
-        return;
       }
-
-      const userData = {
-        id: data[0].id,
-        role: data[0].role
-      };
-
-      login(userData);
-      toast.success("Login successful");
     } catch (error) {
       console.error('Error:', error);
       toast.error("Failed to login");

@@ -1,5 +1,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
+import { Navigate, useLocation } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -7,9 +8,10 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth(true);
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#222222] flex items-center justify-center">
         <p className="text-white">Loading...</p>
@@ -18,7 +20,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   }
 
   if (!user) {
-    return null; // useAuth will redirect to /auth
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
   }
 
   if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {

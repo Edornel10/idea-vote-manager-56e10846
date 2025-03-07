@@ -34,7 +34,7 @@ export default function Vote() {
         console.log("Fetched ideas:", data);
         
         // Map the data to match the Idea type with summary property
-        return data.map((idea: any): Idea => ({
+        return Array.isArray(data) ? data.map((idea: any): Idea => ({
           id: idea.id,
           title: idea.title,
           category: idea.category,
@@ -43,7 +43,7 @@ export default function Vote() {
           votes: idea.votes || 0,
           created_at: idea.created_at,
           frozen: idea.frozen
-        }));
+        })) : [];
       } catch (error) {
         console.error("Error fetching ideas:", error);
         throw error;

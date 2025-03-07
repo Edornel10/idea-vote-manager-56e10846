@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +24,7 @@ export default function Browse() {
       try {
         // Get all ideas, including frozen ones
         const data = await getIdeas(true);
-        return data;
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching ideas:', error);
         throw error;
@@ -49,7 +48,6 @@ export default function Browse() {
     }
   };
 
-  // New mutation for toggling the frozen status
   const toggleFreezeMutation = useMutation({
     mutationFn: async ({ ideaId, frozen }: { ideaId: string; frozen: boolean }) => {
       const result = await updateIdea(ideaId, { frozen });
@@ -73,13 +71,13 @@ export default function Browse() {
     toggleFreezeMutation.mutate({ ideaId, frozen: !currentStatus });
   };
 
-  const filteredIdeas = ideas.filter((idea: any) => {
+  const filteredIdeas = Array.isArray(ideas) ? ideas.filter((idea: any) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
                          idea.description.toLowerCase().includes(search.toLowerCase()) ||
                          (idea.summary && idea.summary.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
     return matchesSearch && matchesCategory;
-  });
+  }) : [];
 
   if (isLoading) {
     return (
@@ -156,7 +154,6 @@ export default function Browse() {
                 showVoteButton={false}
               />
               
-              {/* Moved admin buttons below the vote count */}
               {user?.role === 'admin' && (
                 <div className="absolute top-20 right-4 flex space-x-2">
                   <Button
