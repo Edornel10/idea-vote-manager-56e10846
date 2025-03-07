@@ -3,12 +3,16 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React build
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // Database connection config
 const getDbConfig = () => ({
@@ -237,7 +241,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy' });
 });
 
+// Serve React app for all other routes (SPA support)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 // Start the server
 app.listen(PORT, () => {
-  console.log(`API Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

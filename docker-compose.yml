@@ -5,10 +5,8 @@ services:
   app:
     build: .
     ports:
-      - "8080:80"
       - "3001:3001"
     environment:
-      - VITE_API_URL=http://localhost:3001/api
       - DB_HOST=db
       - DB_PORT=3306
       - DB_USER=ideauser
