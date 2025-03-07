@@ -1,10 +1,10 @@
 
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import { ThumbsUp, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import type { Idea } from "@/types/idea";
+import type { Idea } from "../../types/idea";
 import { formatDistance } from "date-fns";
 
 interface IdeaCardProps {

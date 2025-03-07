@@ -1,12 +1,12 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { IdeaCard } from "@/components/vote/IdeaCard";
-import { SearchControls } from "@/components/vote/SearchControls";
-import { useAuth } from "@/hooks/useAuth";
+import { IdeaCard } from "../components/vote/IdeaCard";
+import { SearchControls } from "../components/vote/SearchControls";
+import { useAuth } from "../hooks/useAuth";
 import { toast } from "sonner";
-import { Idea } from "@/types/idea";
-import { getIdeas, updateIdea } from "@/api/client";
+import { Idea } from "../types/idea";
+import { getIdeas, updateIdea } from "../api/client";
 
 export default function Vote() {
   const [search, setSearch] = useState("");

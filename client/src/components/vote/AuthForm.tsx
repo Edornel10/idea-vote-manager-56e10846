@@ -1,10 +1,10 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { useToast } from "../../hooks/use-toast";
 
 interface AuthFormProps {
   onAuthenticate: (isValid: boolean) => void;

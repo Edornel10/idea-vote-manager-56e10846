@@ -1,14 +1,14 @@
 
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
+import { Card } from "../components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Download, Upload } from "lucide-react";
-import { getUsers, createUser, deleteUser } from "@/integrations/mariadb/client";
+import { getUsers, createUser, deleteUser } from "../integrations/mariadb/client";
 
 interface User {
   id: string;

@@ -1,7 +1,7 @@
 
 import { NavigationLink } from "./NavigationLink";
-import { User } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
+import { User } from "../hooks/useAuth";
+import { cn } from "../lib/utils";
 
 interface MobileNavProps {
   isOpen: boolean;

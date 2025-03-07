@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { login as apiLogin } from '@/api/client';
+import { login as apiLogin } from '../api/client';
 
 export type User = {
   id: string;

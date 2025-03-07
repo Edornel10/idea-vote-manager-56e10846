@@ -1,17 +1,17 @@
 
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Filter, Search, Plus, Trash2, SnowflakeIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { toast } from "sonner";
-import { categories } from "@/types/idea";
-import { useAuth } from "@/hooks/useAuth";
-import { IdeaCard } from "@/components/vote/IdeaCard";
-import { getIdeas, updateIdea, deleteIdea } from "@/api/client";
+import { categories } from "../types/idea";
+import { useAuth } from "../hooks/useAuth";
+import { IdeaCard } from "../components/vote/IdeaCard";
+import { getIdeas, updateIdea, deleteIdea } from "../api/client";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
