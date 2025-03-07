@@ -1,59 +1,75 @@
 
-import mysql from 'mysql2/promise';
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
+import { User } from '@/hooks/useAuth';
 
-// Database connection pool
-let pool: mysql.Pool | null = null;
+// Mock database for browser environment
+const mockIdeas = [
+  {
+    id: '1',
+    title: 'Add Dark Mode',
+    category: 'UI/UX',
+    description: 'Implement a dark mode option for better night-time viewing',
+    summary: 'Better for night-time viewing',
+    votes: 15,
+    frozen: false
+  },
+  {
+    id: '2',
+    title: 'Mobile App',
+    category: 'Features',
+    description: 'Create a mobile app version for iOS and Android',
+    summary: 'For iOS and Android',
+    votes: 20,
+    frozen: false
+  },
+  {
+    id: '3',
+    title: 'User Profiles',
+    category: 'Features',
+    description: 'Add user profiles with activity history and badges',
+    summary: 'With activity history and badges',
+    votes: 8,
+    frozen: true
+  }
+];
+
+const mockUsers = [
+  {
+    id: '1',
+    username: 'admin',
+    password_hash: '$2a$10$JwYX5DrFUDTg7zN1CQUQWOQWtTJ0GY5NUow.xvXMqCQALpFH.j8c.', // Password: admin123
+    role: 'admin'
+  },
+  {
+    id: '2',
+    username: 'user',
+    password_hash: '$2a$10$i3.Z8fVVL6nMriZQC5l0KO/SVUQBF.T4jrBxKznOj6GxV6W0QzXFu', // Password: user123
+    role: 'standard'
+  }
+];
 
 // Initialize database connection
 export const initDatabase = async () => {
-  if (!pool) {
-    pool = mysql.createPool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '3306'),
-      user: process.env.DB_USER || 'ideauser',
-      password: process.env.DB_PASSWORD || 'ideapass',
-      database: process.env.DB_NAME || 'ideavote',
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
-    
-    console.log('Database connection initialized');
-  }
-  return pool;
+  console.log('Mock database initialized');
+  return null;
 };
 
 // Get database connection
 export const getDb = async () => {
-  if (!pool) {
-    await initDatabase();
-  }
-  return pool!;
+  return null;
 };
 
 // Ideas related functions
 export const getIdeas = async (includeAll = false) => {
-  const db = await getDb();
-  
-  let query = 'SELECT * FROM ideas';
+  console.log('Getting ideas, includeAll:', includeAll);
   if (!includeAll) {
-    // Only get non-frozen ideas
-    query += ' WHERE frozen IS NULL OR frozen = FALSE';
+    return mockIdeas.filter(idea => !idea.frozen);
   }
-  
-  query += ' ORDER BY votes DESC';
-  
-  const [rows] = await db.query(query);
-  return rows;
+  return mockIdeas;
 };
 
 export const getIdeaById = async (id: string) => {
-  const db = await getDb();
-  const [rows] = await db.query('SELECT * FROM ideas WHERE id = ?', [id]);
-  const ideas = rows as any[];
-  return ideas.length > 0 ? ideas[0] : null;
+  console.log('Getting idea by id:', id);
+  return mockIdeas.find(idea => idea.id === id) || null;
 };
 
 export const createIdea = async (idea: {
@@ -63,70 +79,65 @@ export const createIdea = async (idea: {
   summary?: string;
   votes?: number;
 }) => {
-  const db = await getDb();
-  const id = crypto.randomUUID();
-  await db.query(
-    'INSERT INTO ideas (id, title, category, description, summary, votes) VALUES (?, ?, ?, ?, ?, ?)',
-    [id, idea.title, idea.category, idea.description, idea.summary || '', idea.votes || 0]
-  );
-  return { id, ...idea };
+  console.log('Creating idea:', idea);
+  const id = Math.random().toString(36).substring(2, 15);
+  const newIdea = { id, ...idea, votes: idea.votes || 0, frozen: false };
+  mockIdeas.push(newIdea);
+  return newIdea;
 };
 
 export const updateIdea = async (
   id: string,
   updates: { votes?: number; frozen?: boolean }
 ) => {
-  const db = await getDb();
+  console.log('Updating idea:', id, updates);
+  const ideaIndex = mockIdeas.findIndex(idea => idea.id === id);
+  if (ideaIndex === -1) return null;
   
-  // Build the SET clause dynamically based on what's being updated
-  const setClauses = [];
-  const values = [];
+  const updatedIdea = { ...mockIdeas[ideaIndex] };
   
   if (updates.votes !== undefined) {
-    setClauses.push('votes = ?');
-    values.push(updates.votes);
+    updatedIdea.votes = updates.votes;
   }
   
   if (updates.frozen !== undefined) {
-    setClauses.push('frozen = ?');
-    values.push(updates.frozen);
+    updatedIdea.frozen = updates.frozen;
   }
   
-  if (setClauses.length === 0) {
-    return null; // Nothing to update
-  }
-  
-  // Add the id to the values array
-  values.push(id);
-  
-  const query = `UPDATE ideas SET ${setClauses.join(', ')} WHERE id = ?`;
-  await db.query(query, values);
-  
-  return await getIdeaById(id);
+  mockIdeas[ideaIndex] = updatedIdea;
+  return updatedIdea;
 };
 
 export const deleteIdea = async (id: string) => {
-  const db = await getDb();
-  await db.query('DELETE FROM ideas WHERE id = ?', [id]);
+  console.log('Deleting idea:', id);
+  const ideaIndex = mockIdeas.findIndex(idea => idea.id === id);
+  if (ideaIndex !== -1) {
+    mockIdeas.splice(ideaIndex, 1);
+  }
   return { id };
 };
 
 // User related functions
 export const getUserByUsername = async (username: string) => {
-  const db = await getDb();
-  const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-  const users = rows as any[];
-  return users.length > 0 ? users[0] : null;
+  console.log('Getting user by username:', username);
+  return mockUsers.find(user => user.username === username) || null;
 };
 
+import bcrypt from 'bcryptjs';
+
 export const verifyPassword = async (username: string, password: string) => {
+  console.log('Verifying password for:', username);
   const user = await getUserByUsername(username);
   if (!user) return null;
   
-  const passwordValid = await bcrypt.compare(password, user.password_hash);
-  if (!passwordValid) return null;
+  // In browser environment, authenticate based on hardcoded values for demo
+  if (username === 'admin' && password === 'admin123') {
+    return { id: '1', role: 'admin' as const };
+  } else if (username === 'user' && password === 'user123') {
+    return { id: '2', role: 'standard' as const };
+  }
   
-  return { id: user.id, role: user.role };
+  return null;
 };
 
 export const createUser = async (user: {
@@ -134,26 +145,31 @@ export const createUser = async (user: {
   password: string;
   role?: 'admin' | 'standard';
 }) => {
-  const db = await getDb();
-  const id = crypto.randomUUID();
-  const passwordHash = await bcrypt.hash(user.password, 10);
+  console.log('Creating user:', user);
+  const id = Math.random().toString(36).substring(2, 15);
+  const hashedPassword = 'hashed-password'; // Mock password hash
   
-  await db.query(
-    'INSERT INTO users (id, username, password_hash, role) VALUES (?, ?, ?, ?)',
-    [id, user.username, passwordHash, user.role || 'standard']
-  );
+  const newUser = { 
+    id, 
+    username: user.username, 
+    password_hash: hashedPassword,
+    role: user.role || 'standard'
+  };
   
+  mockUsers.push(newUser);
   return { id, username: user.username, role: user.role || 'standard' };
 };
 
 export const getUsers = async () => {
-  const db = await getDb();
-  const [rows] = await db.query('SELECT id, username, role FROM users');
-  return rows;
+  console.log('Getting all users');
+  return mockUsers.map(({ id, username, role }) => ({ id, username, role }));
 };
 
 export const deleteUser = async (id: string) => {
-  const db = await getDb();
-  await db.query('DELETE FROM users WHERE id = ?', [id]);
+  console.log('Deleting user:', id);
+  const userIndex = mockUsers.findIndex(user => user.id === id);
+  if (userIndex !== -1) {
+    mockUsers.splice(userIndex, 1);
+  }
   return { id };
 };
