@@ -6,12 +6,12 @@ import { Filter, Search, Plus, Trash2, SnowflakeIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { categories } from "@/types/idea";
 import { useAuth } from "@/hooks/useAuth";
 import { IdeaCard } from "@/components/vote/IdeaCard";
+import { getIdeas, updateIdea, deleteIdea } from "@/integrations/mariadb/client";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
@@ -22,13 +22,14 @@ export default function Browse() {
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ['ideas'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('ideas')
-        .select('*')
-        .order('votes', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      try {
+        // Get all ideas, including frozen ones
+        const data = await getIdeas(true);
+        return data;
+      } catch (error) {
+        console.error('Error fetching ideas:', error);
+        throw error;
+      }
     }
   });
 
@@ -39,13 +40,7 @@ export default function Browse() {
     }
 
     try {
-      const { error } = await supabase
-        .from('ideas')
-        .delete()
-        .eq('id', ideaId);
-
-      if (error) throw error;
-
+      await deleteIdea(ideaId);
       await queryClient.invalidateQueries({ queryKey: ['ideas'] });
       toast.success("Idea deleted successfully");
     } catch (error) {
@@ -57,12 +52,7 @@ export default function Browse() {
   // New mutation for toggling the frozen status
   const toggleFreezeMutation = useMutation({
     mutationFn: async ({ ideaId, frozen }: { ideaId: string; frozen: boolean }) => {
-      const { error } = await supabase
-        .from('ideas')
-        .update({ frozen })
-        .eq('id', ideaId);
-      
-      if (error) throw error;
+      const result = await updateIdea(ideaId, { frozen });
       return { ideaId, frozen };
     },
     onSuccess: ({ frozen }) => {
@@ -83,7 +73,7 @@ export default function Browse() {
     toggleFreezeMutation.mutate({ ideaId, frozen: !currentStatus });
   };
 
-  const filteredIdeas = ideas.filter((idea) => {
+  const filteredIdeas = ideas.filter((idea: any) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
                          idea.description.toLowerCase().includes(search.toLowerCase()) ||
                          (idea.summary && idea.summary.toLowerCase().includes(search.toLowerCase()));
@@ -143,7 +133,7 @@ export default function Browse() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          {filteredIdeas.map((idea) => (
+          {filteredIdeas.map((idea: any) => (
             <motion.div
               key={idea.id}
               layout
@@ -161,7 +151,7 @@ export default function Browse() {
                   summary: idea.summary || "",
                   votes: idea.votes || 0,
                   created_at: idea.created_at,
-                  frozen: idea.frozen
+                  frozen: idea.frozen || false
                 }}
                 showVoteButton={false}
               />

@@ -1,12 +1,12 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { IdeaCard } from "@/components/vote/IdeaCard";
 import { SearchControls } from "@/components/vote/SearchControls";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Idea } from "@/types/idea";
+import { getIdeas, updateIdea } from "@/integrations/mariadb/client";
 
 export default function Vote() {
   const [search, setSearch] = useState("");
@@ -28,28 +28,26 @@ export default function Vote() {
   const { data: ideas = [], isLoading } = useQuery({
     queryKey: ["ideas"],
     queryFn: async () => {
-      // The correct way to filter for frozen=false OR frozen=null
-      const { data, error } = await supabase
-        .from("ideas")
-        .select("*")
-        .or('frozen.is.null,frozen.eq.false')  // This is the correct OR syntax in Supabase
-        .order("votes", { ascending: false });
-      
-      if (error) throw error;
-      
-      console.log("Fetched ideas:", data);
-      
-      // Map the data to match the Idea type with summary property
-      return data.map((idea): Idea => ({
-        id: idea.id,
-        title: idea.title,
-        category: idea.category,
-        description: idea.description,
-        summary: idea.summary || "",
-        votes: idea.votes || 0,
-        created_at: idea.created_at,
-        frozen: idea.frozen
-      }));
+      try {
+        const data = await getIdeas();
+        
+        console.log("Fetched ideas:", data);
+        
+        // Map the data to match the Idea type with summary property
+        return data.map((idea: any): Idea => ({
+          id: idea.id,
+          title: idea.title,
+          category: idea.category,
+          description: idea.description,
+          summary: idea.summary || "",
+          votes: idea.votes || 0,
+          created_at: idea.created_at,
+          frozen: idea.frozen
+        }));
+      } catch (error) {
+        console.error("Error fetching ideas:", error);
+        throw error;
+      }
     },
   });
 
@@ -66,13 +64,12 @@ export default function Vote() {
         throw new Error("You've already voted for this idea");
       }
 
-      const { error } = await supabase
-        .from("ideas")
-        .update({ votes: ideas.find(i => i.id === ideaId)!.votes + 1 })
-        .eq("id", ideaId);
-      
-      if (error) throw error;
-      
+      const idea = ideas.find(i => i.id === ideaId);
+      if (!idea) {
+        throw new Error("Idea not found");
+      }
+
+      const result = await updateIdea(ideaId, { votes: idea.votes + 1 });
       return ideaId;
     },
     onSuccess: (ideaId) => {

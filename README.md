@@ -1,8 +1,28 @@
-# Welcome to your Lovable project
+
+# Idea Vote Manager
+
+This project is a web application for submitting, voting on, and managing ideas. It uses React for the frontend and MariaDB for the database.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/cd64373b-c94d-4372-a6fd-498f77b7fb1e
+
+## How to run with Docker
+
+This project can be run using Docker, which provides an easy setup with both the web application and the MariaDB database.
+
+```bash
+# Clone the repository
+git clone <YOUR_GIT_URL>
+
+# Navigate to the project directory
+cd <YOUR_PROJECT_NAME>
+
+# Run the application with Docker Compose
+docker-compose up -d
+```
+
+The application will be available at http://localhost:8080
 
 ## How can I edit this code?
 
@@ -52,18 +72,44 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- MariaDB
+- Docker
+
+## Database Schema
+
+The application uses the following database schema:
+
+### Ideas Table
+- `id` - VARCHAR(36) - Primary Key
+- `title` - VARCHAR(255) - Not Null
+- `category` - VARCHAR(100) - Not Null
+- `description` - TEXT - Not Null
+- `summary` - TEXT
+- `votes` - INT - Default 0
+- `created_at` - TIMESTAMP - Default Current Timestamp
+- `frozen` - BOOLEAN - Default False
+
+### Users Table
+- `id` - VARCHAR(36) - Primary Key
+- `username` - VARCHAR(100) - Unique, Not Null
+- `password_hash` - VARCHAR(255) - Not Null
+- `role` - ENUM('admin', 'standard') - Default 'standard'
+
+## Default Login
+
+The application comes with a default admin user:
+- Username: admin
+- Password: admin123
 
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/cd64373b-c94d-4372-a6fd-498f77b7fb1e) and click on Share -> Publish.
 
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+For deployment with Docker, you can use any Docker-compatible hosting service.

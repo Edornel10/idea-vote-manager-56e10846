@@ -1,14 +1,13 @@
-
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Download, Upload } from "lucide-react";
+import { getUsers, createUser, deleteUser } from "@/integrations/mariadb/client";
 
 interface User {
   id: string;
@@ -27,12 +26,13 @@ export default function UserManagement() {
   const { data: users = [], refetch } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, username, role');
-      
-      if (error) throw error;
-      return data as User[];
+      try {
+        const data = await getUsers();
+        return data as User[];
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+      }
     }
   });
 
@@ -45,21 +45,11 @@ export default function UserManagement() {
     }
 
     try {
-      const { data: passwordHash } = await supabase.rpc('hash_password', {
-        password: newPassword
+      await createUser({
+        username: newUsername,
+        password: newPassword,
+        role: newRole
       });
-
-      const { error } = await supabase
-        .from('users')
-        .insert([
-          {
-            username: newUsername,
-            password_hash: passwordHash,
-            role: newRole
-          }
-        ]);
-
-      if (error) throw error;
 
       toast.success("User added successfully");
       setNewUsername("");
@@ -74,13 +64,7 @@ export default function UserManagement() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-
-      if (error) throw error;
-
+      await deleteUser(userId);
       toast.success("User deleted successfully");
       refetch();
     } catch (error) {
@@ -149,12 +133,12 @@ export default function UserManagement() {
           console.log("Parsed columns:", columns);
           
           // The export format includes id, username, role
-          // For import, we need username, password_hash, role
+          // For import, we need username, password, role
           // Since we can't import password hashes directly, we set a default password
           // that admins would need to reset later
           if (columns.length >= 3) {
             const username = columns[1];
-            const role = columns[2];
+            const role = columns[2] as 'admin' | 'standard';
             
             // Only accept valid roles
             if (role !== 'admin' && role !== 'standard') {
@@ -162,14 +146,9 @@ export default function UserManagement() {
               continue;
             }
             
-            // Generate a password hash for the default password
-            const { data: passwordHash } = await supabase.rpc('hash_password', {
-              password: 'ChangeMe123!'
-            });
-            
             usersToImport.push({
               username,
-              password_hash: passwordHash,
+              password: 'ChangeMe123!',
               role
             });
           }
@@ -179,7 +158,7 @@ export default function UserManagement() {
 
         // Filter out invalid entries
         const validUsers = usersToImport.filter(user => {
-          return user.username && user.password_hash && (user.role === 'admin' || user.role === 'standard');
+          return user.username && user.password && (user.role === 'admin' || user.role === 'standard');
         });
         
         if (validUsers.length === 0) {
@@ -188,14 +167,7 @@ export default function UserManagement() {
 
         // Insert users into database
         for (const user of validUsers) {
-          const { error } = await supabase
-            .from('users')
-            .insert([user]);
-
-          if (error) {
-            console.error("Error importing user:", user.username, error);
-            // Continue with other users if one fails
-          }
+          await createUser(user);
         }
 
         await refetch();
@@ -219,11 +191,7 @@ export default function UserManagement() {
     setIsExporting(true);
 
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, username, role');
-
-      if (error) throw error;
+      const data = await getUsers();
       
       if (!data || data.length === 0) {
         toast.error("There are no users to export");
@@ -234,10 +202,10 @@ export default function UserManagement() {
       const headers = ['id', 'username', 'role'];
       const csvContent = [
         headers.join(','),
-        ...data.map(user => 
+        ...data.map((user: any) => 
           headers.map(header => {
             // Properly quote and escape values
-            const value = String(user[header as keyof typeof user] || '');
+            const value = String(user[header] || '');
             return `"${value.replace(/"/g, '""')}"`;
           }).join(',')
         )

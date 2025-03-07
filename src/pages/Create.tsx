@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,12 +8,11 @@ import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Download, Upload } from "lucide-react";
 import { categories } from "@/types/idea";
+import { createIdea, getIdeas } from "@/integrations/mariadb/client";
 
-// Remove "All" from categories since it's not a valid category for ideas
 const validCategories = categories.filter(cat => cat !== "All");
 
 export default function Create() {
@@ -48,13 +46,13 @@ export default function Create() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('ideas')
-        .insert([
-          { title, category, summary, description, votes: 0 }
-        ]);
-
-      if (error) throw error;
+      await createIdea({
+        title, 
+        category, 
+        summary, 
+        description, 
+        votes: 0
+      });
 
       await queryClient.invalidateQueries({ queryKey: ['ideas'] });
       
@@ -173,13 +171,8 @@ export default function Create() {
         }
 
         // Insert ideas into database
-        const { error } = await supabase
-          .from('ideas')
-          .insert(validIdeas);
-
-        if (error) {
-          console.error("Supabase insert error:", error);
-          throw error;
+        for (const idea of validIdeas) {
+          await createIdea(idea);
         }
 
         await queryClient.invalidateQueries({ queryKey: ['ideas'] });
@@ -210,12 +203,7 @@ export default function Create() {
     setIsExporting(true);
 
     try {
-      const { data, error } = await supabase
-        .from('ideas')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await getIdeas(true);
       
       if (!data || data.length === 0) {
         toast({
@@ -229,10 +217,10 @@ export default function Create() {
       const headers = ['id', 'title', 'category', 'summary', 'description', 'votes', 'created_at'];
       const csvContent = [
         headers.join(','),
-        ...data.map(idea => 
+        ...data.map((idea: any) => 
           headers.map(header => {
             // Properly quote and escape values
-            const value = String(idea[header as keyof typeof idea] || '');
+            const value = String(idea[header] || '');
             return `"${value.replace(/"/g, '""')}"`;
           }).join(',')
         )
