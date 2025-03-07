@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +11,7 @@ import { toast } from "sonner";
 import { categories } from "@/types/idea";
 import { useAuth } from "@/hooks/useAuth";
 import { IdeaCard } from "@/components/vote/IdeaCard";
-import { getIdeas, updateIdea, deleteIdea } from "@/integrations/mariadb/client";
+import { getIdeas, updateIdea, deleteIdea } from "@/api/client";
 
 export default function Browse() {
   const [search, setSearch] = useState("");
@@ -24,7 +25,7 @@ export default function Browse() {
       try {
         // Get all ideas, including frozen ones
         const data = await getIdeas(true);
-        return Array.isArray(data) ? data : [];
+        return data;
       } catch (error) {
         console.error('Error fetching ideas:', error);
         throw error;
@@ -71,13 +72,13 @@ export default function Browse() {
     toggleFreezeMutation.mutate({ ideaId, frozen: !currentStatus });
   };
 
-  const filteredIdeas = Array.isArray(ideas) ? ideas.filter((idea: any) => {
+  const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch = idea.title.toLowerCase().includes(search.toLowerCase()) ||
                          idea.description.toLowerCase().includes(search.toLowerCase()) ||
                          (idea.summary && idea.summary.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = selectedCategory === "All" || idea.category === selectedCategory;
     return matchesSearch && matchesCategory;
-  }) : [];
+  });
 
   if (isLoading) {
     return (
@@ -131,7 +132,7 @@ export default function Browse() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          {filteredIdeas.map((idea: any) => (
+          {filteredIdeas.map((idea) => (
             <motion.div
               key={idea.id}
               layout
@@ -141,16 +142,7 @@ export default function Browse() {
               className="relative"
             >
               <IdeaCard 
-                idea={{
-                  id: idea.id,
-                  title: idea.title,
-                  category: idea.category,
-                  description: idea.description,
-                  summary: idea.summary || "",
-                  votes: idea.votes || 0,
-                  created_at: idea.created_at,
-                  frozen: idea.frozen || false
-                }}
+                idea={idea}
                 showVoteButton={false}
               />
               

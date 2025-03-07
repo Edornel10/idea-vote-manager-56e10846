@@ -1,9 +1,16 @@
 
-# Build stage
-FROM node:20-alpine AS builder
+# Build stage for API
+FROM node:20-alpine AS api-builder
+
+WORKDIR /api
+COPY api/package*.json ./
+RUN npm install
+COPY api .
+
+# Build stage for frontend
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci
 
@@ -13,14 +20,23 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
-# Copy built assets from the builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Set environment variable
+ENV VITE_API_URL=http://localhost:3001/api
+
+# Copy built assets from the frontend builder stage
+COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port
-EXPOSE 80
+# Copy API files and install dependencies
+COPY --from=api-builder /api /app/api
+RUN apk add --no-cache nodejs npm
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Expose ports
+EXPOSE 80 3001
+
+# Start nginx and API server
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+CMD ["/start.sh"]

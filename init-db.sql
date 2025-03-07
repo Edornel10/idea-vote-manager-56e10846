@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Add some sample data
 INSERT INTO ideas (id, title, category, description, summary, votes) VALUES
-    (UUID(), 'Improve Documentation', 'Documentation', 'We should improve our documentation with more examples.', 'Add better examples to docs', 5),
-    (UUID(), 'Add Dark Mode', 'UI/UX', 'Implement a dark mode for better eye comfort.', 'Implement dark mode', 10);
+    (UUID(), 'Improve Documentation', 'Education', 'We should improve our documentation with more examples.', 'Add better examples to docs', 5),
+    (UUID(), 'Add Dark Mode', 'Technology', 'Implement a dark mode for better eye comfort.', 'Implement dark mode', 10);
 
 -- Add admin user (password: admin123)
 INSERT INTO users (id, username, password_hash, role) VALUES

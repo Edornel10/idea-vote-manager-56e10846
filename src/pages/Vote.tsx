@@ -6,7 +6,7 @@ import { SearchControls } from "@/components/vote/SearchControls";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Idea } from "@/types/idea";
-import { getIdeas, updateIdea } from "@/integrations/mariadb/client";
+import { getIdeas, updateIdea } from "@/api/client";
 
 export default function Vote() {
   const [search, setSearch] = useState("");
@@ -30,20 +30,8 @@ export default function Vote() {
     queryFn: async () => {
       try {
         const data = await getIdeas();
-        
         console.log("Fetched ideas:", data);
-        
-        // Map the data to match the Idea type with summary property
-        return Array.isArray(data) ? data.map((idea: any): Idea => ({
-          id: idea.id,
-          title: idea.title,
-          category: idea.category,
-          description: idea.description,
-          summary: idea.summary || "",
-          votes: idea.votes || 0,
-          created_at: idea.created_at,
-          frozen: idea.frozen
-        })) : [];
+        return data;
       } catch (error) {
         console.error("Error fetching ideas:", error);
         throw error;

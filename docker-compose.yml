@@ -2,16 +2,18 @@
 version: '3.8'
 
 services:
-  web:
+  app:
     build: .
     ports:
       - "8080:80"
+      - "3001:3001"
     environment:
-      - VITE_DB_HOST=db
-      - VITE_DB_PORT=3306
-      - VITE_DB_USER=ideauser
-      - VITE_DB_PASSWORD=ideapass
-      - VITE_DB_NAME=ideavote
+      - VITE_API_URL=http://localhost:3001/api
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=ideauser
+      - DB_PASSWORD=ideapass
+      - DB_NAME=ideavote
     depends_on:
       - db
   

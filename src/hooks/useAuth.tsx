@@ -1,5 +1,6 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { verifyPassword } from '@/integrations/mariadb/client';
+import { login as apiLogin } from '@/api/client';
 
 export type User = {
   id: string;
@@ -9,7 +10,7 @@ export type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  login: (credentials: User | {username: string, password: string}) => Promise<boolean>;
+  login: (credentials: {username: string, password: string}) => Promise<boolean>;
   logout: () => void;
 };
 
@@ -34,25 +35,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const login = async (credentials: User | {username: string, password: string}): Promise<boolean> => {
+  const login = async (credentials: {username: string, password: string}): Promise<boolean> => {
     try {
-      // If we already have a user object (from supabase response)
-      if ('id' in credentials && 'role' in credentials) {
-        setUser(credentials);
-        localStorage.setItem('user', JSON.stringify(credentials));
+      const result = await apiLogin(credentials);
+      
+      if (result) {
+        setUser(result);
+        localStorage.setItem('user', JSON.stringify(result));
         return true;
       }
       
-      // Otherwise, verify username/password
-      if ('username' in credentials && 'password' in credentials) {
-        const result = await verifyPassword(credentials.username, credentials.password);
-        
-        if (result) {
-          setUser(result);
-          localStorage.setItem('user', JSON.stringify(result));
-          return true;
-        }
-      }
       return false;
     } catch (error) {
       console.error('Login error:', error);

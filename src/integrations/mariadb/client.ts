@@ -2,6 +2,26 @@
 import mysql from 'mysql2/promise';
 import { User } from '@/hooks/useAuth';
 import bcrypt from 'bcryptjs';
+import { RowDataPacket, OkPacket, ResultSetHeader } from 'mysql2';
+
+// Define interfaces for database results
+interface IdeaRow extends RowDataPacket {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  summary?: string;
+  votes: number;
+  created_at: string;
+  frozen: boolean;
+}
+
+interface UserRow extends RowDataPacket {
+  id: string;
+  username: string;
+  password_hash: string;
+  role: 'admin' | 'standard';
+}
 
 // Connection configuration
 const getConfig = () => ({
@@ -43,7 +63,7 @@ export const getIdeas = async (includeAll = false) => {
     if (!includeAll) {
       query += ' WHERE frozen = FALSE';
     }
-    const [rows] = await db.execute(query);
+    const [rows] = await db.execute<IdeaRow[]>(query);
     await db.end();
     return rows;
   } catch (error) {
@@ -55,7 +75,7 @@ export const getIdeas = async (includeAll = false) => {
 export const getIdeaById = async (id: string) => {
   try {
     const db = await getDb();
-    const [rows] = await db.execute('SELECT * FROM ideas WHERE id = ?', [id]);
+    const [rows] = await db.execute<IdeaRow[]>('SELECT * FROM ideas WHERE id = ?', [id]);
     await db.end();
     
     if (Array.isArray(rows) && rows.length > 0) {
@@ -79,14 +99,14 @@ export const createIdea = async (idea: {
     const db = await getDb();
     const { title, category, description, summary = '', votes = 0 } = idea;
     
-    const [result] = await db.execute(
+    const [result] = await db.execute<ResultSetHeader>(
       'INSERT INTO ideas (title, category, description, summary, votes) VALUES (?, ?, ?, ?, ?)',
       [title, category, description, summary, votes]
     );
     
     await db.end();
     
-    if ('insertId' in result) {
+    if (result.insertId) {
       return {
         id: result.insertId.toString(),
         title,
@@ -163,7 +183,7 @@ export const deleteIdea = async (id: string) => {
 export const getUserByUsername = async (username: string) => {
   try {
     const db = await getDb();
-    const [rows] = await db.execute('SELECT * FROM users WHERE username = ?', [username]);
+    const [rows] = await db.execute<UserRow[]>('SELECT * FROM users WHERE username = ?', [username]);
     await db.end();
     
     if (Array.isArray(rows) && rows.length > 0) {
@@ -207,14 +227,14 @@ export const createUser = async (user: {
     // Hash the password
     const passwordHash = await bcrypt.hash(password, 10);
     
-    const [result] = await db.execute(
+    const [result] = await db.execute<ResultSetHeader>(
       'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
       [username, passwordHash, role]
     );
     
     await db.end();
     
-    if ('insertId' in result) {
+    if (result.insertId) {
       return { 
         id: result.insertId.toString(), 
         username,
@@ -232,7 +252,7 @@ export const createUser = async (user: {
 export const getUsers = async () => {
   try {
     const db = await getDb();
-    const [rows] = await db.execute('SELECT id, username, role FROM users');
+    const [rows] = await db.execute<UserRow[]>('SELECT id, username, role FROM users');
     await db.end();
     return rows;
   } catch (error) {
