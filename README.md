@@ -20,6 +20,15 @@ npm i
 npm run dev
 ```
 
+## Users
+Admin
+user: admin
+password: admin
+
+Normal User
+user: user
+password: user123
+
 ## Next Steps
 - Update to a local Database with the following Table structure which currently stores users and ideas but is hosted anywhere.
 ![supabase-schema-bipiwqdnwnuxgwfpyarh](https://github.com/user-attachments/assets/57165375-3d49-402d-a26c-4dcd26f40055)
